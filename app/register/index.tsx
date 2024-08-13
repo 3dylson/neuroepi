@@ -1,26 +1,27 @@
 import React from "react";
-import { Image, StyleSheet } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedButton } from "@/components/ThemedButton";
 import { router } from "expo-router";
+import { CustomButton } from "@/components/CustomButton";
 
-const RegisterLandingScreen = () => {
+const LandingScreen = () => {
   return (
-    <ThemedView style={styles.container}>
+    <View style={styles.container}>
       <Image source={require("@/assets/images/icon.png")} style={styles.logo} />
-      <ThemedText style={styles.text}>
+      <Text variant="bodyLarge" style={styles.text}>
         Preencha com atenção todas as suas informações. São essenciais para que
         você possa obter os melhores resultados do aplicativo
-      </ThemedText>
-      <ThemedView style={styles.buttonContainer}>
-        <ThemedButton
-          title="Continuar"
-          onPress={() => router.push("/register_form_name")}
-        />
-      </ThemedView>
-    </ThemedView>
+      </Text>
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          mode="contained"
+          onPress={() => router.push("/register/form_name")}
+        >
+          Continuar
+        </CustomButton>
+      </View>
+    </View>
   );
 };
 
@@ -49,4 +50,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterLandingScreen;
+export default LandingScreen;
