@@ -8,6 +8,7 @@ import {
   PaperProvider,
 } from "react-native-paper";
 import "react-native-reanimated";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -33,16 +34,18 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider theme={theme}>
-      <Stack
-        screenOptions={{
-          animation: "none",
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="home" />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-      </Stack>
-    </PaperProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PaperProvider theme={theme}>
+        <Stack
+          screenOptions={{
+            animation: "none",
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="home" />
+          <Stack.Screen name="register" options={{ headerShown: false }} />
+        </Stack>
+      </PaperProvider>
+    </GestureHandlerRootView>
   );
 }
