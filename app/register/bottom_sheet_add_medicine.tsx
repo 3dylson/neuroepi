@@ -1,27 +1,117 @@
-import React, { useState, useRef, useCallback } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, StyleSheet, Platform } from "react-native";
 import { Text, TextInput, Button, IconButton, Chip } from "react-native-paper";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { CustomButton } from "@/components/CustomButton";
+import Popover from "react-native-popover-view";
+import { Placement } from "react-native-popover-view/dist/Types";
+import { DoseUnitEnum } from "@/constants/DoseUnitEnum"; // Ensure this path is correct and DoseUnitEnum is properly defined
+import DropDownInput from "@/components/DropDownInput";
+import CustomDateTimePicker from "@/components/CustomDateTimePicker";
+import { isAndroid, isIOS } from "../utils/Utils";
 
-export default function BottomSheetAddMedicineScreen() {
-  const [dose, setDose] = useState("1000");
-  const [frequency, setFrequency] = useState("Diariamente");
-  const [time, setTime] = useState("09:30");
-  const [notes, setNotes] = useState("This is notes");
+interface BottomSheetAddMedicineScreenProps {
+  onClose: () => void;
+  onSave: () => void;
+}
+
+enum ChipType {
+  Epilepsy = "epilepsy",
+  Other = "other",
+}
+
+const BottomSheetAddMedicineScreen: React.FC<
+  BottomSheetAddMedicineScreenProps
+> = ({ onClose, onSave }) => {
+  const [formState, setFormState] = useState({
+    nome: "",
+    dose: "",
+    doseUnit: DoseUnitEnum.MG,
+    frequency: "",
+    time: "",
+    notes: "",
+    relatedMedication: "",
+    epilepsyChipSelected: true,
+    otherChipSelected: false,
+  });
+  const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState(false);
+
+  const handleChipPress = (chip: ChipType) => {
+    setFormState((prev) => ({
+      ...prev,
+      epilepsyChipSelected: chip === ChipType.Epilepsy,
+      otherChipSelected: chip === ChipType.Other,
+    }));
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const renderDoseUnitPopoverContent = (selectItem: (item: string) => void) => (
+    <View style={styles.menu}>
+      {Object.values(DoseUnitEnum).map((doseUnit) => (
+        <Button
+          key={doseUnit}
+          mode="text"
+          onPress={() => {
+            selectItem(doseUnit);
+            handleInputChange("doseUnit", doseUnit);
+            console.log("Dose unit selected:", doseUnit);
+          }}
+        >
+          {doseUnit}
+        </Button>
+      ))}
+    </View>
+  );
+
+  const renderTimePopoverContent = (selectItem: (item: string) => void) => {
+    const [selectedTime, setSelectedTime] = useState<Date>(new Date());
+
+    return (
+      <View style={styles.menu}>
+        <CustomDateTimePicker
+          value={selectedTime}
+          mode="time"
+          onChange={(event, date) => {
+            if (date) {
+              setSelectedTime(date);
+            }
+          }}
+        />
+        {isIOS() && (
+          <Button
+            mode="contained"
+            onPress={() => {
+              if (selectedTime) {
+                const timeString = selectedTime.toHourMinuteString();
+                selectItem(timeString);
+                handleInputChange("time", timeString);
+                console.log("Time selected:", timeString);
+              }
+            }}
+          >
+            Confirmar
+          </Button>
+        )}
+      </View>
+    );
+  };
 
   return (
-    <View>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton icon="close" onPress={() => console.log("Close pressed")} />
+        <IconButton icon="close" onPress={onClose} />
         <Text variant="titleLarge" style={styles.headerTitle}>
-          Add Medicine
+          Medicamento
         </Text>
-        <Button onPress={() => console.log("Save pressed")}>GUARDAR</Button>
+        <Button onPress={onSave}>GUARDAR</Button>
       </View>
 
       <TextInput
         label="Nome"
-        value="Aptiom"
+        value={formState.nome}
+        onChangeText={(text) => handleInputChange("nome", text)}
         left={<TextInput.Icon icon="pill" />}
         mode="outlined"
         style={styles.input}
@@ -29,97 +119,158 @@ export default function BottomSheetAddMedicineScreen() {
 
       <View style={styles.chipGroup}>
         <Chip
-          selected
+          selected={formState.epilepsyChipSelected}
           style={styles.chip}
-          onPress={() => console.log("Epilepsy selected")}
+          onPress={() => handleChipPress(ChipType.Epilepsy)}
         >
-          Epilepsy
+          Epilepsia
         </Chip>
-        <Chip style={styles.chip} onPress={() => console.log("Other selected")}>
-          Other
+        <Chip
+          selected={formState.otherChipSelected}
+          style={styles.chip}
+          onPress={() => handleChipPress(ChipType.Other)}
+        >
+          Outro
         </Chip>
       </View>
 
-      <Text style={styles.label}>This Medicine is related to</Text>
-      <Text style={styles.note}>Allergies</Text>
+      {formState.otherChipSelected && (
+        <TextInput
+          label="Este medicamento está relacionado com"
+          value={formState.relatedMedication}
+          onChangeText={(text) => handleInputChange("relatedMedication", text)}
+          mode="outlined"
+          style={styles.input}
+        />
+      )}
 
-      <View style={styles.row}>
+      <View style={styles.rowDose}>
         <TextInput
           label="Dose"
-          value={dose}
-          onChangeText={setDose}
+          value={formState.dose}
+          onChangeText={(text) => handleInputChange("dose", text)}
           mode="outlined"
-          style={[styles.input, styles.doseInput]}
+          style={styles.doseInput}
         />
-        <TextInput
-          value="mg"
-          editable={false}
-          mode="outlined"
-          style={[styles.input, styles.unitInput]}
+        <DropDownInput
+          label="Unidade"
+          text={formState.doseUnit.toString()}
+          textInputProps={{
+            editable: false,
+            mode: "outlined",
+            style: styles.unitInput,
+          }}
+          renderPopoverContent={renderDoseUnitPopoverContent}
         />
       </View>
 
       <Text style={styles.label}>Horários</Text>
       <View style={styles.row}>
-        <TextInput
-          value={time}
-          onChangeText={setTime}
+        {/* <TextInput
+          value={formState.time}
+          onChangeText={(text) => handleInputChange("time", text)}
           mode="outlined"
           left={<TextInput.Icon icon="clock-outline" />}
-          style={[styles.input, styles.timeInput]}
+          style={styles.timeInput}
+        /> */}
+
+        <DropDownInput
+          label=""
+          text={formState.time}
+          textInputProps={{
+            editable: false,
+            mode: "outlined",
+            style: styles.timeInput,
+          }}
+          {...(isIOS() && {
+            renderPopoverContent: renderTimePopoverContent,
+          })}
+          customAction={() => {
+            if (isAndroid()) {
+              setRenderAndroidTimePicker(true);
+            }
+          }}
         />
         <IconButton
           icon="minus-circle-outline"
           onPress={() => console.log("Remove time")}
         />
+
+        {renderAndroidTimePicker && (
+          <CustomDateTimePicker
+            value={new Date()}
+            mode="time"
+            onChange={(event, date) => {
+              if (date) {
+                setRenderAndroidTimePicker(false);
+                const timeString = date.toHourMinuteString();
+                handleInputChange("time", timeString);
+                console.log("Time selected:", timeString);
+              }
+            }}
+            onDismiss={() => setRenderAndroidTimePicker(false)}
+          />
+        )}
       </View>
-      <Button mode="text" onPress={() => console.log("Add more doses pressed")}>
+
+      <CustomButton
+        mode="text"
+        onPress={() => console.log("Add more doses pressed")}
+      >
         Adicionar Mais Doses
-      </Button>
+      </CustomButton>
 
       <TextInput
         label="Frequência"
-        value={frequency}
-        onChangeText={setFrequency}
+        value={formState.frequency}
+        onChangeText={(text) => handleInputChange("frequency", text)}
         left={<TextInput.Icon icon="repeat" />}
         mode="outlined"
         style={styles.input}
       />
 
-      <Button
+      <CustomButton
         mode="outlined"
         icon="alarm"
         style={styles.alarmButton}
         onPress={() => console.log("Adicionar Alarme pressed")}
       >
         Adicionar Alarme
-      </Button>
+      </CustomButton>
 
-      <Text style={styles.label}>Notes</Text>
+      <Text style={styles.label}>Notas</Text>
       <TextInput
-        value={notes}
-        onChangeText={setNotes}
+        value={formState.notes}
+        onChangeText={(text) => handleInputChange("notes", text)}
         mode="outlined"
-        style={[styles.input, styles.notesInput]}
+        style={styles.notesInput}
       />
 
-      <Button
+      <CustomButton
         mode="contained"
         style={styles.saveButton}
         onPress={() => console.log("Guardar pressed")}
       >
         Guardar
-      </Button>
+      </CustomButton>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 8,
+  },
+  label: {
+    marginBottom: 4,
+    fontWeight: "bold",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 34,
   },
   headerTitle: {
     flex: 1,
@@ -135,27 +286,20 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 8,
   },
-  label: {
-    marginBottom: 4,
-    fontWeight: "bold",
+  rowDose: {
+    flexDirection: "row",
+    marginBottom: 34,
   },
-  note: {
-    backgroundColor: "#e0e0e0",
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 16,
+  doseInput: {
+    flex: 1,
+  },
+  unitInput: {
+    flex: 1,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
-  },
-  doseInput: {
-    flex: 3,
-    marginRight: 8,
-  },
-  unitInput: {
-    flex: 1,
   },
   timeInput: {
     flex: 1,
@@ -169,6 +313,12 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 16,
-    paddingVertical: 8,
+    marginBottom: 32,
+  },
+  menu: {
+    padding: 8,
+    borderRadius: 4,
   },
 });
+
+export default BottomSheetAddMedicineScreen;

@@ -27,7 +27,7 @@ const CustomDateTimePicker = React.forwardRef<any, CustomDateTimePickerProps>(
       display || (Platform.OS === "ios" ? "spinner" : "default");
 
     const handleChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-      console.log("Selected date: ", selectedDate, "Event: ", event);
+      console.log("Selected date: ", selectedDate);
 
       if (onChange && event.type !== "dismissed") {
         onChange(event, selectedDate);

@@ -11,7 +11,11 @@ import { FormStyles } from "./styles/FormStyle";
 import { View, StyleSheet } from "react-native";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
 import AddCard from "@/components/AddCard";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetBackdrop,
+  BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import BottomSheetAddMedicineScreen from "./bottom_sheet_add_medicine";
 
 export default function FormMedication() {
@@ -21,7 +25,7 @@ export default function FormMedication() {
   // state to control bottom sheet visibility
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
-  const snapPoints = useMemo(() => ["25%", "90%"], []);
+  const snapPoints = useMemo(() => ["95%"], []);
 
   // callbacks for bottom sheet
   const handleSheetChanges = useCallback((index: number) => {
@@ -33,9 +37,24 @@ export default function FormMedication() {
     setIsBottomSheetVisible(true); // Show bottom sheet
   };
 
+  const handleOnSavePress = useCallback(() => {
+    // Add your save logic here
+  }, []);
+
   const handleClosePress = useCallback(() => {
     bottomSheetRef.current?.close();
   }, []);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+      />
+    ),
+    []
+  );
 
   useEffect(() => {
     if (params.showHelpDialog === "true") {
@@ -66,13 +85,18 @@ export default function FormMedication() {
         <BottomSheet
           ref={bottomSheetRef}
           onChange={handleSheetChanges}
-          index={1}
+          backdropComponent={renderBackdrop}
+          enablePanDownToClose={true}
+          index={0}
           snapPoints={snapPoints}
           onClose={() => setIsBottomSheetVisible(false)} // Close bottom sheet on swipe down
         >
-          <BottomSheetView style={styles.bottomSheetContentContainer}>
-            <BottomSheetAddMedicineScreen />
-          </BottomSheetView>
+          <BottomSheetScrollView style={styles.bottomSheetContentContainer}>
+            <BottomSheetAddMedicineScreen
+              onClose={handleClosePress}
+              onSave={handleOnSavePress}
+            />
+          </BottomSheetScrollView>
         </BottomSheet>
       )}
     </View>

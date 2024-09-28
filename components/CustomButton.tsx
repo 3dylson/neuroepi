@@ -20,5 +20,6 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: "center",
     borderRadius: 25,
+    alignSelf: "center", // Center the button within the parent view
   },
 });
