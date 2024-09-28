@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Text,
   ViewStyle,
+  ScrollView,
 } from "react-native";
 import { TextInput, TextInputProps } from "react-native-paper";
 import Popover from "react-native-popover-view";
@@ -85,9 +86,9 @@ const DropDownInput: React.FC<DropDownInputProps> = ({
           onRequestClose={closeMenu}
           placement={popoverPlacement} // Allow dynamic placement
         >
-          <View style={styles.popoverContent}>
+          <ScrollView style={styles.popoverContent}>
             {renderPopoverContent(handleItemSelect)}
-          </View>
+          </ScrollView>
         </Popover>
       )}
     </View>
@@ -97,8 +98,8 @@ const DropDownInput: React.FC<DropDownInputProps> = ({
 // Styles for the component
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     justifyContent: "center",
+    flex: 1,
   },
   anchorContainer: {
     flexDirection: "row",

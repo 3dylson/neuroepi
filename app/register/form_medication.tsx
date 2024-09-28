@@ -5,10 +5,10 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { TextInput, FAB, Text } from "react-native-paper";
+import { FAB, Text } from "react-native-paper";
 import { router, useLocalSearchParams } from "expo-router";
 import { FormStyles } from "./styles/FormStyle";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
 import AddCard from "@/components/AddCard";
 import BottomSheet, {
@@ -17,11 +17,16 @@ import BottomSheet, {
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
 import BottomSheetAddMedicineScreen from "./bottom_sheet_add_medicine";
+import MedicineCard from "@/components/MedicineCard";
+import { Medicine } from "../model/Medicine";
 
 export default function FormMedication() {
+  const [medicineList, setMedicineList] = useState<Medicine[]>([]);
   const params = useLocalSearchParams();
   // ref for bottom sheet
   const bottomSheetRef = useRef<BottomSheet>(null);
+  // ref for scroll view
+  const scrollViewRef = useRef<ScrollView>(null);
   // state to control bottom sheet visibility
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
@@ -29,7 +34,7 @@ export default function FormMedication() {
 
   // callbacks for bottom sheet
   const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index);
+    //console.log("handleSheetChanges", index);
   }, []);
 
   // Function to handle AddCard press
@@ -37,8 +42,23 @@ export default function FormMedication() {
     setIsBottomSheetVisible(true); // Show bottom sheet
   };
 
-  const handleOnSavePress = useCallback(() => {
-    // Add your save logic here
+  const handleOnSavePress = useCallback((newMedicine: Medicine) => {
+    setMedicineList((prevList) => [...prevList, newMedicine]);
+    handleClosePress();
+  }, []);
+
+  useEffect(() => {
+    if (medicineList.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [medicineList]);
+
+  const handleMedicineDelete = useCallback((id: string) => {
+    setMedicineList((prevList) =>
+      prevList.filter((medicine) => medicine.id !== id)
+    );
   }, []);
 
   const handleClosePress = useCallback(() => {
@@ -65,16 +85,39 @@ export default function FormMedication() {
 
   return (
     <View style={FormStyles.container}>
-      <View style={FormStyles.content}>
-        <Text variant="headlineSmall" style={FormStyles.title}>
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={[
+          FormStyles.content,
+          { flex: medicineList.length ? 0 : 1 },
+        ]}
+      >
+        <Text
+          variant="headlineSmall"
+          style={[
+            FormStyles.title,
+            { marginTop: medicineList.length ? 54 : 0 },
+          ]}
+        >
           Está tomando algum medicamento?
         </Text>
         <Text style={FormStyles.subtitle}>
           Liste todos os medicamentos que você está tomando atualmente, mesmo
           que não estejam relacionados à epilepsia.
         </Text>
+        {medicineList.map((medicine, index) => (
+          <MedicineCard
+            key={index}
+            id={medicine.id}
+            name={medicine.name}
+            dosage={medicine.dose + " " + medicine.doseUnit.toString()}
+            times={medicine.times}
+            icon={require("@/assets/images/pills.png")}
+            onDelete={handleMedicineDelete}
+          />
+        ))}
         <AddCard text="Adicionar Medicamento" onPress={handleAddCardPress} />
-      </View>
+      </ScrollView>
       <FAB
         icon="arrow-right"
         style={FormStyles.fab}

@@ -1,17 +1,17 @@
-import React, { useState, useRef } from "react";
-import { View, StyleSheet, Platform } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet } from "react-native";
 import { Text, TextInput, Button, IconButton, Chip } from "react-native-paper";
 import { CustomButton } from "@/components/CustomButton";
-import Popover from "react-native-popover-view";
-import { Placement } from "react-native-popover-view/dist/Types";
-import { DoseUnitEnum } from "@/constants/DoseUnitEnum"; // Ensure this path is correct and DoseUnitEnum is properly defined
+import { DoseUnitEnum } from "@/constants/DoseUnitEnum";
 import DropDownInput from "@/components/DropDownInput";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
-import { isAndroid, isIOS } from "../utils/Utils";
+import { generateId, isAndroid, isIOS } from "../utils/Utils";
+import { DoseFrequency } from "@/constants/DoseFrequency";
+import { Medicine } from "../model/Medicine";
 
 interface BottomSheetAddMedicineScreenProps {
   onClose: () => void;
-  onSave: () => void;
+  onSave: (newMedicine: Medicine) => void;
 }
 
 enum ChipType {
@@ -23,16 +23,18 @@ const BottomSheetAddMedicineScreen: React.FC<
   BottomSheetAddMedicineScreenProps
 > = ({ onClose, onSave }) => {
   const [formState, setFormState] = useState({
-    nome: "",
+    name: "",
     dose: "",
     doseUnit: DoseUnitEnum.MG,
-    frequency: "",
-    time: "",
+    frequency: null as DoseFrequency | null,
     notes: "",
     relatedMedication: "",
     epilepsyChipSelected: true,
     otherChipSelected: false,
+    setAlarm: false,
   });
+
+  const [timeList, setTimeList] = useState<string[]>([""]); // Initialize with one empty time input
   const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState(false);
 
   const handleChipPress = (chip: ChipType) => {
@@ -43,8 +45,47 @@ const BottomSheetAddMedicineScreen: React.FC<
     }));
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleTimeChange = (index: number, value: string) => {
+    const updatedTimes = [...timeList];
+    updatedTimes[index] = value;
+    setTimeList(updatedTimes);
+  };
+
+  const addTimeInput = () => {
+    if (timeList[timeList.length - 1] !== "") {
+      setTimeList([...timeList, ""]);
+    }
+  };
+
+  const removeTimeInput = (index: number) => {
+    const updatedTimes = [...timeList];
+    updatedTimes.splice(index, 1);
+    setTimeList(updatedTimes);
+  };
+
+  function checkLastTimeInputFilled() {
+    return timeList[timeList.length - 1] !== "";
+  }
+
+  const handleSave = () => {
+    const newMedicine: Medicine = new Medicine(
+      generateId(),
+      formState.name,
+      formState.dose,
+      formState.doseUnit,
+      formState.frequency ?? DoseFrequency.Other, // Provide a default value if frequency is null
+      timeList.filter((time) => time !== ""),
+      formState.notes,
+      formState.relatedMedication,
+      formState.epilepsyChipSelected,
+      formState.setAlarm
+    );
+
+    onSave(newMedicine);
   };
 
   const renderDoseUnitPopoverContent = (selectItem: (item: string) => void) => (
@@ -56,10 +97,29 @@ const BottomSheetAddMedicineScreen: React.FC<
           onPress={() => {
             selectItem(doseUnit);
             handleInputChange("doseUnit", doseUnit);
-            console.log("Dose unit selected:", doseUnit);
           }}
         >
           {doseUnit}
+        </Button>
+      ))}
+    </View>
+  );
+
+  const renderFrequencyPopoverContent = (
+    selectItem: (item: string) => void
+  ) => (
+    <View style={styles.menu}>
+      {Object.values(DoseFrequency).map((frequency) => (
+        <Button
+          key={frequency}
+          mode="text"
+          onPress={() => {
+            selectItem(frequency);
+            handleInputChange("frequency", frequency);
+            console.log("Frequency selected:", frequency);
+          }}
+        >
+          {frequency}
         </Button>
       ))}
     </View>
@@ -76,6 +136,7 @@ const BottomSheetAddMedicineScreen: React.FC<
           onChange={(event, date) => {
             if (date) {
               setSelectedTime(date);
+              handleTimeChange(timeList.length - 1, date.toHourMinuteString());
             }
           }}
         />
@@ -86,8 +147,6 @@ const BottomSheetAddMedicineScreen: React.FC<
               if (selectedTime) {
                 const timeString = selectedTime.toHourMinuteString();
                 selectItem(timeString);
-                handleInputChange("time", timeString);
-                console.log("Time selected:", timeString);
               }
             }}
           >
@@ -105,13 +164,13 @@ const BottomSheetAddMedicineScreen: React.FC<
         <Text variant="titleLarge" style={styles.headerTitle}>
           Medicamento
         </Text>
-        <Button onPress={onSave}>GUARDAR</Button>
+        <Button onPress={handleSave}>GUARDAR</Button>
       </View>
 
       <TextInput
         label="Nome"
-        value={formState.nome}
-        onChangeText={(text) => handleInputChange("nome", text)}
+        value={formState.name}
+        onChangeText={(text) => handleInputChange("name", text)}
         left={<TextInput.Icon icon="pill" />}
         mode="outlined"
         style={styles.input}
@@ -151,6 +210,7 @@ const BottomSheetAddMedicineScreen: React.FC<
           onChangeText={(text) => handleInputChange("dose", text)}
           mode="outlined"
           style={styles.doseInput}
+          keyboardType="numeric"
         />
         <DropDownInput
           label="Unidade"
@@ -165,82 +225,83 @@ const BottomSheetAddMedicineScreen: React.FC<
       </View>
 
       <Text style={styles.label}>Horários</Text>
-      <View style={styles.row}>
-        {/* <TextInput
-          value={formState.time}
-          onChangeText={(text) => handleInputChange("time", text)}
-          mode="outlined"
-          left={<TextInput.Icon icon="clock-outline" />}
-          style={styles.timeInput}
-        /> */}
-
-        <DropDownInput
-          label=""
-          text={formState.time}
-          textInputProps={{
-            editable: false,
-            mode: "outlined",
-            style: styles.timeInput,
-          }}
-          {...(isIOS() && {
-            renderPopoverContent: renderTimePopoverContent,
-          })}
-          customAction={() => {
-            if (isAndroid()) {
-              setRenderAndroidTimePicker(true);
-            }
-          }}
-        />
-        <IconButton
-          icon="minus-circle-outline"
-          onPress={() => console.log("Remove time")}
-        />
-
-        {renderAndroidTimePicker && (
-          <CustomDateTimePicker
-            value={new Date()}
-            mode="time"
-            onChange={(event, date) => {
-              if (date) {
-                setRenderAndroidTimePicker(false);
-                const timeString = date.toHourMinuteString();
-                handleInputChange("time", timeString);
-                console.log("Time selected:", timeString);
+      {timeList.map((time, index) => (
+        <View style={styles.row} key={index}>
+          <DropDownInput
+            label=""
+            text={time}
+            textInputProps={{
+              editable: false,
+              mode: "outlined",
+              style: styles.timeInput,
+            }}
+            {...(isIOS() && {
+              renderPopoverContent: renderTimePopoverContent,
+            })}
+            customAction={() => {
+              if (isAndroid()) {
+                setRenderAndroidTimePicker(true);
               }
             }}
-            onDismiss={() => setRenderAndroidTimePicker(false)}
           />
-        )}
-      </View>
+          {index > 0 && (
+            <IconButton
+              icon="minus-circle-outline"
+              onPress={() => removeTimeInput(index)}
+            />
+          )}
 
-      <CustomButton
-        mode="text"
-        onPress={() => console.log("Add more doses pressed")}
-      >
-        Adicionar Mais Doses
-      </CustomButton>
+          {renderAndroidTimePicker && (
+            <CustomDateTimePicker
+              value={new Date()}
+              mode="time"
+              onChange={(event, date) => {
+                if (date) {
+                  setRenderAndroidTimePicker(false);
+                  const timeString = date.toHourMinuteString();
+                  handleTimeChange(index, timeString);
+                }
+              }}
+              onDismiss={() => setRenderAndroidTimePicker(false)}
+            />
+          )}
+        </View>
+      ))}
 
-      <TextInput
+      {checkLastTimeInputFilled() && (
+        <CustomButton
+          mode="text"
+          style={{ marginBottom: 16 }}
+          onPress={addTimeInput}
+        >
+          Adicionar Mais Doses
+        </CustomButton>
+      )}
+
+      <DropDownInput
         label="Frequência"
-        value={formState.frequency}
-        onChangeText={(text) => handleInputChange("frequency", text)}
-        left={<TextInput.Icon icon="repeat" />}
-        mode="outlined"
-        style={styles.input}
+        text={formState.frequency?.toString() ?? ""}
+        textInputProps={{
+          editable: false,
+          mode: "outlined",
+          style: [styles.input, { flex: 1, marginTop: 16 }],
+          left: <TextInput.Icon icon="repeat" />,
+        }}
+        renderPopoverContent={renderFrequencyPopoverContent}
       />
 
-      <CustomButton
-        mode="outlined"
-        icon="alarm"
-        style={styles.alarmButton}
-        onPress={() => console.log("Adicionar Alarme pressed")}
+      <Chip
+        selected={formState.setAlarm}
+        style={styles.alarmChip}
+        onPress={() => handleInputChange("setAlarm", !formState.setAlarm)}
       >
         Adicionar Alarme
-      </CustomButton>
+      </Chip>
 
       <Text style={styles.label}>Notas</Text>
       <TextInput
         value={formState.notes}
+        multiline={true}
         onChangeText={(text) => handleInputChange("notes", text)}
         mode="outlined"
         style={styles.notesInput}
@@ -249,7 +310,7 @@ const BottomSheetAddMedicineScreen: React.FC<
       <CustomButton
         mode="contained"
         style={styles.saveButton}
-        onPress={() => console.log("Guardar pressed")}
+        onPress={handleSave}
       >
         Guardar
       </CustomButton>
@@ -305,11 +366,14 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  alarmButton: {
-    marginBottom: 16,
+  alarmChip: {
+    marginBottom: 32,
+    width: "auto",
+    alignSelf: "flex-start",
   },
   notesInput: {
     height: 80,
+    marginBottom: 16,
   },
   saveButton: {
     marginTop: 16,
