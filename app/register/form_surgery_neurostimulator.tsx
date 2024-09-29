@@ -94,7 +94,7 @@ export default function FormSurgeryNeurostimulator() {
       <FAB
         icon="arrow-right"
         style={FormStyles.fab}
-        onPress={() => console.log("TODO: Save surgery/neurostimulator option")}
+        onPress={() => router.push("/register/form_doctor_contact")}
       />
     </View>
   );

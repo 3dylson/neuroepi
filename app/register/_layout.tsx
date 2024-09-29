@@ -42,6 +42,10 @@ export default function RegisterLayout() {
         name="form_surgery_neurostimulator"
         options={screenWithHelpOptions}
       />
+      <Stack.Screen
+        name="form_doctor_contact"
+        options={screenWithHelpOptions}
+      />
     </Stack>
   );
 }
