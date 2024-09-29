@@ -3,6 +3,7 @@ export {};
 declare global {
   interface String {
     toDateFromHourMinuteString(): Date;
+    isNullOrEmpty(): boolean;
   }
 }
 
@@ -16,6 +17,10 @@ String.prototype.toDateFromHourMinuteString = function (): Date {
   date.setSeconds(0);
   date.setMilliseconds(0);
   return date;
+};
+
+String.prototype.isNullOrEmpty = function (): boolean {
+  return this == null || this.trim() === "";
 };
 
 // Example usage:

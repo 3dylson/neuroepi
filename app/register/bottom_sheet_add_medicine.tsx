@@ -77,7 +77,7 @@ const BottomSheetAddMedicineScreen: React.FC<
       formState.name,
       formState.dose,
       formState.doseUnit,
-      formState.frequency ?? DoseFrequency.Other, // Provide a default value if frequency is null
+      formState.frequency ?? DoseFrequency.OTHER, // Provide a default value if frequency is null
       timeList.filter((time) => time !== ""),
       formState.notes,
       formState.relatedMedication,

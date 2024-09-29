@@ -23,7 +23,7 @@ export default function FormGender() {
         >
           {Object.values(Gender).map((option, index) => (
             <RadioButton.Item
-              key={option}
+              key={index}
               label={option}
               value={option}
               //style={{ marginTop: index === 2 ? 16 : 0 }}

@@ -38,6 +38,10 @@ export default function RegisterLayout() {
       />
       <Stack.Screen name="form_diagnosis" options={screenWithHelpOptions} />
       <Stack.Screen name="form_medication" options={screenWithHelpOptions} />
+      <Stack.Screen
+        name="form_surgery_neurostimulator"
+        options={screenWithHelpOptions}
+      />
     </Stack>
   );
 }

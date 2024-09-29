@@ -121,7 +121,7 @@ export default function FormMedication() {
       <FAB
         icon="arrow-right"
         style={FormStyles.fab}
-        onPress={() => console.log("Next")}
+        onPress={() => router.push("/register/form_surgery_neurostimulator")}
       />
 
       {isBottomSheetVisible && (

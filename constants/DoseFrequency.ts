@@ -6,5 +6,5 @@ export enum DoseFrequency {
   EVERY_8_HOURS = "A cada 8 horas",
   EVERY_6_HOURS = "A cada 6 horas",
 
-  Other = "Outro",
+  OTHER = "Outro",
 }
