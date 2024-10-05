@@ -7,6 +7,9 @@ import {
   AgendaSchedule,
 } from "react-native-calendars";
 import calendarIDs from "./calendarIDs";
+import { DoseFrequency } from "@/constants/DoseFrequency"; // Import DoseFrequency if needed
+import { User } from "@/app/model/User";
+import { Medicine } from "@/app/model/Medicine";
 
 interface State {
   items?: AgendaSchedule;
@@ -17,9 +20,79 @@ export default class CalendarScreen extends Component<State> {
     items: undefined,
   };
 
-  // reservationsKeyExtractor = (item, index) => {
-  //   return `${item?.reservation?.day}${index}`;
-  // };
+  componentDidMount() {
+    this.loadUserMedicines();
+  }
+
+  // Fetch User's Medicines and Load them into the Calendar
+  loadUserMedicines = async () => {
+    const user = await User.getFromLocal(); // Fetch user data from secure storage
+    if (user && user.medicines) {
+      const items = this.state.items || {};
+      const today = new Date(); // Get today's date
+
+      // Generate medicine events based on frequency and times
+      user.medicines.forEach((medicine) => {
+        this.addMedicineToCalendar(items, medicine, today);
+      });
+
+      this.setState({ items });
+    } else {
+      Alert.alert("Nenhum dado de usuário encontrado");
+    }
+  };
+
+  // Add medicine to the calendar based on its frequency and times
+  addMedicineToCalendar = (
+    items: AgendaSchedule,
+    medicine: Medicine,
+    startDate: Date
+  ) => {
+    // Logic to add medicine entries based on frequency
+    const { frequency, times } = medicine;
+    let currentDate = new Date(startDate); // Start from today
+
+    // Adjust number of days based on frequency (for this example, we'll do it for 30 days)
+    const daysToGenerate = 30;
+    for (let i = 0; i < daysToGenerate; i++) {
+      const strTime = this.timeToString(currentDate.getTime());
+
+      // Check if the medicine should be added for this date based on the frequency
+      if (this.isMedicineDueOnDate(medicine, currentDate)) {
+        if (!items[strTime]) {
+          items[strTime] = [];
+        }
+
+        // Add medicine entry to the calendar for each time
+        times.forEach((time) => {
+          items[strTime].push({
+            name: `${medicine.name} (${time}) - ${medicine.dose} ${medicine.doseUnit}`,
+            height: 60,
+            day: strTime,
+          });
+        });
+      }
+
+      // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  };
+
+  // Check if the medicine is due on the given date based on frequency
+  isMedicineDueOnDate = (medicine: Medicine, date: Date): boolean => {
+    const dayOfWeek = date.getDay(); // Sunday = 0, Monday = 1, ...
+    switch (medicine.frequency) {
+      case DoseFrequency.DAILY:
+        return true; // Show every day
+      case DoseFrequency.WEEKLY:
+        return dayOfWeek === 0; // For example, every Sunday
+      case DoseFrequency.MONTHLY:
+        return date.getDate() === 1; // For example, first day of the month
+      // Add more cases based on your DoseFrequency enum
+      default:
+        return false;
+    }
+  };
 
   render() {
     return (
@@ -27,78 +100,17 @@ export default class CalendarScreen extends Component<State> {
         testID={calendarIDs.agenda.CONTAINER}
         items={this.state.items}
         loadItemsForMonth={this.loadItems}
-        selected={"2017-05-16"}
+        selected={this.timeToString(new Date().getTime())} // Set today's date as selected
         renderItem={this.renderItem}
         renderEmptyDate={this.renderEmptyDate}
         rowHasChanged={this.rowHasChanged}
         showClosingKnob={true}
-        // markingType={'period'}
-        // markedDates={{
-        //    '2017-05-08': {textColor: '#43515c'},
-        //    '2017-05-09': {textColor: '#43515c'},
-        //    '2017-05-14': {startingDay: true, endingDay: true, color: 'blue'},
-        //    '2017-05-21': {startingDay: true, color: 'blue'},
-        //    '2017-05-22': {endingDay: true, color: 'gray'},
-        //    '2017-05-24': {startingDay: true, color: 'gray'},
-        //    '2017-05-25': {color: 'gray'},
-        //    '2017-05-26': {endingDay: true, color: 'gray'}}}
-        // monthFormat={'yyyy'}
-        // theme={{calendarBackground: 'red', agendaKnobColor: 'green'}}
-        // renderDay={this.renderDay}
-        // hideExtraDays={false}
-        // showOnlySelectedDayItems
-        // reservationsKeyExtractor={this.reservationsKeyExtractor}
       />
     );
   }
 
   loadItems = (day: DateData) => {
-    const items = this.state.items || {};
-
-    setTimeout(() => {
-      for (let i = -15; i < 85; i++) {
-        const time = day.timestamp + i * 24 * 60 * 60 * 1000;
-        const strTime = this.timeToString(time);
-
-        if (!items[strTime]) {
-          items[strTime] = [];
-
-          const numItems = Math.floor(Math.random() * 3 + 1);
-          for (let j = 0; j < numItems; j++) {
-            items[strTime].push({
-              name: "Item for " + strTime + " #" + j,
-              height: Math.max(50, Math.floor(Math.random() * 150)),
-              day: strTime,
-            });
-          }
-        }
-      }
-
-      const newItems: AgendaSchedule = {};
-      Object.keys(items).forEach((key) => {
-        newItems[key] = items[key];
-      });
-      this.setState({
-        items: newItems,
-      });
-    }, 1000);
-  };
-
-  renderDay = (day: {
-    getDay: () =>
-      | string
-      | number
-      | boolean
-      | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-      | Iterable<React.ReactNode>
-      | React.ReactPortal
-      | null
-      | undefined;
-  }) => {
-    if (day) {
-      return <Text style={styles.customDay}>{day.getDay()}</Text>;
-    }
-    return <View style={styles.dayItem} />;
+    // You can keep this logic to handle loading more items if needed
   };
 
   renderItem = (reservation: AgendaEntry, isFirst: boolean) => {
@@ -119,7 +131,7 @@ export default class CalendarScreen extends Component<State> {
   renderEmptyDate = () => {
     return (
       <View style={styles.emptyDate}>
-        <Text>This is empty date!</Text>
+        <Text>This is an empty date!</Text>
       </View>
     );
   };
