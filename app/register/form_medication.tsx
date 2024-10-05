@@ -20,7 +20,13 @@ import BottomSheetAddMedicineScreen from "./bottom_sheet_add_medicine";
 import MedicineCard from "@/components/MedicineCard";
 import { Medicine } from "../model/Medicine";
 
-export default function FormMedication() {
+interface FormMedicationProps {
+  isFabVisible?: boolean;
+}
+
+export default function FormMedication({
+  isFabVisible = true,
+}: FormMedicationProps) {
   const [medicineList, setMedicineList] = useState<Medicine[]>([]);
   const params = useLocalSearchParams();
   // ref for bottom sheet
@@ -116,13 +122,19 @@ export default function FormMedication() {
             onDelete={handleMedicineDelete}
           />
         ))}
-        <AddCard text="Adicionar Medicamento" onPress={handleAddCardPress} />
+        <AddCard
+          cardStyle={{ marginBottom: 54 }}
+          text="Adicionar Medicamento"
+          onPress={handleAddCardPress}
+        />
       </ScrollView>
-      <FAB
-        icon="arrow-right"
-        style={FormStyles.fab}
-        onPress={() => router.push("/register/form_surgery_neurostimulator")}
-      />
+      {isFabVisible && (
+        <FAB
+          icon="arrow-right"
+          style={FormStyles.fab}
+          onPress={() => router.push("/register/form_surgery_neurostimulator")}
+        />
+      )}
 
       {isBottomSheetVisible && (
         <BottomSheet

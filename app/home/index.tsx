@@ -51,7 +51,10 @@ const HomeLayout: React.FC = () => {
           <Text style={styles.cardText}>Crises</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          onPress={() => router.push("/home/calendar/calendar")}
+          style={styles.card}
+        >
           <Text style={styles.cardEmoji}>📅</Text>
           <Text style={styles.cardText}>Calendário</Text>
         </TouchableOpacity>
@@ -64,7 +67,10 @@ const HomeLayout: React.FC = () => {
           <Text style={styles.cardText}>Informações</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity
+          onPress={() => router.push("/home/medicine/medicines")}
+          style={styles.card}
+        >
           <Text style={styles.cardEmoji}>💊</Text>
           <Text style={styles.cardText}>Medicação</Text>
         </TouchableOpacity>
@@ -76,7 +82,7 @@ const HomeLayout: React.FC = () => {
           activeOpacity={0.8}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          onLongPress={() => console.log("SOS Pressed!")} // Add your SOS action here
+          onLongPress={() => router.push("/home/sos/incident_alert")} // Add your SOS action here
           style={styles.sosButtonContainer}
         >
           <LinearGradient
@@ -140,8 +146,8 @@ const styles = StyleSheet.create({
     marginBottom: 30, // Bottom padding for the SOS button
   },
   sosButton: {
-    width: 220,
-    height: 220,
+    width: 190,
+    height: 190,
     borderRadius: 110,
     alignItems: "center",
     justifyContent: "center",

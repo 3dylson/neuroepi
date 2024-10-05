@@ -9,9 +9,10 @@ export default function BounceScreen() {
   const [loading, setLoading] = useState(true);
 
   function isUserFormComplete(userFormIsComplete: string | null) {
-    /* TODO: return userFormIsComplete !== null &&
-      userFormIsComplete === DataKey.userFormIsComplete; */
-    return true;
+    return (
+      userFormIsComplete !== null &&
+      userFormIsComplete === DataKey.userFormIsComplete
+    );
   }
 
   const getIsUserFormComplete = async () => {

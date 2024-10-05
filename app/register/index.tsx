@@ -20,6 +20,11 @@ const LandingScreen = () => {
         >
           Continuar
         </CustomButton>
+        {__DEV__ && (
+          <CustomButton mode="text" onPress={() => router.replace("/home")}>
+            Pular Registro
+          </CustomButton>
+        )}
       </View>
     </View>
   );

@@ -1,7 +1,5 @@
 import { Stack } from "expo-router";
 import React from "react";
-import { View } from "react-native";
-import { IconButton } from "react-native-paper";
 export default function HomeLayout() {
   return (
     <Stack
@@ -12,6 +10,9 @@ export default function HomeLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="educate/educate" />
       <Stack.Screen name="educate/details" />
+      <Stack.Screen name="sos/incident_alert" />
+      <Stack.Screen name="medicine/medicines" />
+      <Stack.Screen name="calendar/calendar" />
     </Stack>
   );
 }
