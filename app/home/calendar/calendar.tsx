@@ -1,132 +1,159 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, Card, FAB } from "react-native-paper";
-import { Calendar, DateData } from "react-native-calendars";
-import * as Localization from "expo-localization";
-import AgendaInfiniteListScreen from "./agendaInfinite";
-import AgendaScreen from "./agenda";
+import React, { Component } from "react";
+import { Alert, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import {
+  Agenda,
+  DateData,
+  AgendaEntry,
+  AgendaSchedule,
+} from "react-native-calendars";
+import calendarIDs from "./calendarIDs";
 
-const CalendarScreen: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>(
-    // Set the current date as the selected date
-    new Date()
-  );
+interface State {
+  items?: AgendaSchedule;
+}
 
-  const [locale, setLocale] = useState("pt-PT");
-
-  useEffect(() => {
-    const getLocale = async () => {
-      const locale = await Localization.getLocales();
-      if (locale[0].languageCode) {
-        setLocale(locale[0].languageTag);
-        console.log("Locale: ", locale[0].languageTag);
-      }
-    };
-    getLocale();
-  }, []);
-
-  // Sample event data based on the provided image
-  const events = [
-    { time: "9:30 AM", title: "What's new in Machine Learning", location: "" },
-    { time: "1:00 PM", title: "Google I/O Keynote", location: "Auditório" },
-    { time: "3:15 PM", title: "Developer Keynote", location: "Sala 123" },
-    { time: "4:50 PM", title: "What's new in Android", location: "" },
-  ];
-
-  const onDayPress = (day: DateData) => {
-    setSelectedDate(new Date(day.dateString));
+export default class CalendarScreen extends Component<State> {
+  state: State = {
+    items: undefined,
   };
 
-  return (
-    <AgendaScreen />
-    // <View style={styles.container}>
-    //   {/* Calendar Component */}
-    //   <Calendar
-    //     current={selectedDate}
-    //     onDayPress={onDayPress}
-    //     markedDates={{
-    //       [selectedDate.toLocaleDateString(locale)]: {
-    //         selected: true,
-    //         selectedColor: "green",
-    //       },
-    //     }}
-    //     theme={{
-    //       selectedDayBackgroundColor: "green",
-    //       todayTextColor: "#00adf5",
-    //       textDayFontWeight: "300",
-    //       textMonthFontWeight: "500",
-    //       textDayHeaderFontWeight: "500",
-    //     }}
-    //   />
+  // reservationsKeyExtractor = (item, index) => {
+  //   return `${item?.reservation?.day}${index}`;
+  // };
 
-    //   {/* Events List */}
-    //   <ScrollView style={styles.eventList}>
-    //     <Text style={styles.dateText}>
-    //       {selectedDate.toDayMonthNameYearString(true)}
-    //     </Text>
-    //     {events.map((event, index) => (
-    //       <Card key={index} style={styles.card}>
-    //         <Card.Content>
-    //           <Text style={styles.eventTime}>{event.time}</Text>
-    //           <Text style={styles.eventTitle}>{event.title}</Text>
-    //           {event.location ? (
-    //             <Text style={styles.eventLocation}>{event.location}</Text>
-    //           ) : null}
-    //         </Card.Content>
-    //       </Card>
-    //     ))}
-    //   </ScrollView>
+  render() {
+    return (
+      <Agenda
+        testID={calendarIDs.agenda.CONTAINER}
+        items={this.state.items}
+        loadItemsForMonth={this.loadItems}
+        selected={"2017-05-16"}
+        renderItem={this.renderItem}
+        renderEmptyDate={this.renderEmptyDate}
+        rowHasChanged={this.rowHasChanged}
+        showClosingKnob={true}
+        // markingType={'period'}
+        // markedDates={{
+        //    '2017-05-08': {textColor: '#43515c'},
+        //    '2017-05-09': {textColor: '#43515c'},
+        //    '2017-05-14': {startingDay: true, endingDay: true, color: 'blue'},
+        //    '2017-05-21': {startingDay: true, color: 'blue'},
+        //    '2017-05-22': {endingDay: true, color: 'gray'},
+        //    '2017-05-24': {startingDay: true, color: 'gray'},
+        //    '2017-05-25': {color: 'gray'},
+        //    '2017-05-26': {endingDay: true, color: 'gray'}}}
+        // monthFormat={'yyyy'}
+        // theme={{calendarBackground: 'red', agendaKnobColor: 'green'}}
+        // renderDay={this.renderDay}
+        // hideExtraDays={false}
+        // showOnlySelectedDayItems
+        // reservationsKeyExtractor={this.reservationsKeyExtractor}
+      />
+    );
+  }
 
-    //   {/* Floating Action Button for Add Event */}
-    //   <FAB
-    //     style={styles.fab}
-    //     icon="plus"
-    //     onPress={() => console.log("Add Event")}
-    //   />
-    // </View>
-  );
-};
+  loadItems = (day: DateData) => {
+    const items = this.state.items || {};
 
-export default CalendarScreen;
+    setTimeout(() => {
+      for (let i = -15; i < 85; i++) {
+        const time = day.timestamp + i * 24 * 60 * 60 * 1000;
+        const strTime = this.timeToString(time);
+
+        if (!items[strTime]) {
+          items[strTime] = [];
+
+          const numItems = Math.floor(Math.random() * 3 + 1);
+          for (let j = 0; j < numItems; j++) {
+            items[strTime].push({
+              name: "Item for " + strTime + " #" + j,
+              height: Math.max(50, Math.floor(Math.random() * 150)),
+              day: strTime,
+            });
+          }
+        }
+      }
+
+      const newItems: AgendaSchedule = {};
+      Object.keys(items).forEach((key) => {
+        newItems[key] = items[key];
+      });
+      this.setState({
+        items: newItems,
+      });
+    }, 1000);
+  };
+
+  renderDay = (day: {
+    getDay: () =>
+      | string
+      | number
+      | boolean
+      | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+      | Iterable<React.ReactNode>
+      | React.ReactPortal
+      | null
+      | undefined;
+  }) => {
+    if (day) {
+      return <Text style={styles.customDay}>{day.getDay()}</Text>;
+    }
+    return <View style={styles.dayItem} />;
+  };
+
+  renderItem = (reservation: AgendaEntry, isFirst: boolean) => {
+    const fontSize = isFirst ? 16 : 14;
+    const color = isFirst ? "black" : "#43515c";
+
+    return (
+      <TouchableOpacity
+        testID={calendarIDs.agenda.ITEM}
+        style={[styles.item, { height: reservation.height }]}
+        onPress={() => Alert.alert(reservation.name)}
+      >
+        <Text style={{ fontSize, color }}>{reservation.name}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  renderEmptyDate = () => {
+    return (
+      <View style={styles.emptyDate}>
+        <Text>This is empty date!</Text>
+      </View>
+    );
+  };
+
+  rowHasChanged = (r1: AgendaEntry, r2: AgendaEntry) => {
+    return r1.name !== r2.name;
+  };
+
+  timeToString(time: number) {
+    const date = new Date(time);
+    return date.toISOString().split("T")[0];
+  }
+}
 
 const styles = StyleSheet.create({
-  container: {
+  item: {
+    backgroundColor: "white",
     flex: 1,
-    backgroundColor: "#f4f4f4",
+    borderRadius: 5,
+    padding: 10,
+    marginRight: 10,
+    marginTop: 17,
   },
-  eventList: {
-    marginTop: 10,
-    paddingHorizontal: 16,
+  emptyDate: {
+    height: 15,
+    flex: 1,
+    paddingTop: 30,
   },
-  dateText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#333",
+  customDay: {
+    margin: 10,
+    fontSize: 24,
+    color: "green",
   },
-  card: {
-    marginBottom: 10,
-    borderRadius: 8,
-    elevation: 2, // Shadow on Android
-  },
-  eventTime: {
-    fontSize: 14,
-    color: "#888",
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginTop: 4,
-  },
-  eventLocation: {
-    fontSize: 14,
-    color: "#888",
-    marginTop: 2,
-  },
-  fab: {
-    margin: 20,
-    marginBottom: 40,
-    alignSelf: "flex-end",
+  dayItem: {
+    marginLeft: 34,
   },
 });
