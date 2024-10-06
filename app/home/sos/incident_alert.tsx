@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
 import { LinearGradient } from "expo-linear-gradient";
 import Chroma from "chroma-js";
+import * as Location from "expo-location"; // Use expo-location for location services
 import { User } from "@/app/model/User";
 
 // Animation component
@@ -34,7 +35,11 @@ const IncidentAlertScreen: React.FC = () => {
   const navigation = useNavigation();
   const [emergencyContactNumber, setEmergencyContactNumber] = useState<
     string | null
-  >(null); // Retrieve this dynamically
+  >(null);
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   // Function to retrieve user's emergency contact from storage
   const loadUserEmergencyContact = async () => {
@@ -51,20 +56,43 @@ const IncidentAlertScreen: React.FC = () => {
     loadUserEmergencyContact();
   }, []);
 
-  // Function to send emergency SMS or WhatsApp
+  // Request location permission and retrieve user's current location
+  const getCurrentLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permissão negada",
+        "Permissão para acessar a localização foi negada."
+      );
+      return;
+    }
+
+    // Get the current location if permission is granted
+    const locationResult = await Location.getCurrentPositionAsync({});
+    const { latitude, longitude } = locationResult.coords;
+    setLocation({ latitude, longitude });
+  };
+
+  // Function to send emergency SMS or WhatsApp with location
   const sendEmergencyMessage = () => {
     if (!emergencyContactNumber) {
       Alert.alert("Nenhum contato de emergência encontrado.");
       return;
     }
 
-    const message =
-      "Estou a ter uma crise epiléptica. Por favor, ajuda-me. Localização atual:";
+    if (!location) {
+      Alert.alert("Localização não disponível. Tente novamente.");
+      return;
+    }
+
+    const { latitude, longitude } = location;
+    const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+    const message = `Estou a ter uma crise epiléptica. Por favor, ajuda-me. Localização atual: ${locationLink}`;
 
     const sendSMS = () => {
       const smsLink = `sms:${emergencyContactNumber}?body=${message}`;
       Linking.openURL(smsLink).catch(() => {
-        Alert.alert("Failed to send SMS.");
+        Alert.alert("Falha ao enviar SMS.");
       });
     };
 
@@ -75,7 +103,7 @@ const IncidentAlertScreen: React.FC = () => {
       });
     };
 
-    //TODO: Decide which platform to use based on user preference
+    // Send WhatsApp on Android, otherwise send SMS
     if (Platform.OS === "android") {
       sendWhatsApp();
     } else {
@@ -91,7 +119,7 @@ const IncidentAlertScreen: React.FC = () => {
     }, INTERVAL);
 
     return () => clearInterval(interval); // Cleanup interval on unmount
-  }, []); // Run effect only once, when the component mounts
+  }, []);
 
   const [topIndex, setTopIndex] = useState(0);
   const [bottomIndex, setBottomIndex] = useState(0);
@@ -123,14 +151,13 @@ const IncidentAlertScreen: React.FC = () => {
         <Text style={styles.buttonText}>Ver Ficha de Emergência</Text>
       </PulsatingButton>
 
-      {/* <Text style={styles.instructionText}>
-        Seu alerta foi enviado para seus contatos de emergência.
-      </Text> */}
-
       {/* Button to trigger emergency message */}
       <TouchableOpacity
         style={styles.sendButton}
-        onPress={sendEmergencyMessage}
+        onPress={() => {
+          getCurrentLocation(); // Get the location before sending the message
+          sendEmergencyMessage(); // Then send the message with location
+        }}
       >
         <Text style={styles.sendButtonText}>Enviar mensagem de emergência</Text>
       </TouchableOpacity>
@@ -168,12 +195,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#fff",
-  },
-  instructionText: {
-    marginTop: 20,
-    fontSize: 16,
-    color: "#fff",
-    textAlign: "center",
   },
   sendButton: {
     marginTop: 40,
