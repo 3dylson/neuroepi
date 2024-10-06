@@ -12,6 +12,7 @@ import { Medicine } from "../model/Medicine";
 interface BottomSheetAddMedicineScreenProps {
   onClose: () => void;
   onSave: (newMedicine: Medicine) => void;
+  medicine?: Medicine; // Optional prop to pass a medicine
 }
 
 enum ChipType {
@@ -21,20 +22,26 @@ enum ChipType {
 
 const BottomSheetAddMedicineScreen: React.FC<
   BottomSheetAddMedicineScreenProps
-> = ({ onClose, onSave }) => {
+> = ({
+  onClose,
+  onSave,
+  medicine, // Destructure the medicine prop
+}) => {
+  // Pre-fill formState based on passed medicine or start with empty values
   const [formState, setFormState] = useState({
-    name: "",
-    dose: "",
-    doseUnit: DoseUnitEnum.MG,
-    frequency: null as DoseFrequency | null,
-    notes: "",
-    relatedMedication: "",
-    epilepsyChipSelected: true,
-    otherChipSelected: false,
-    setAlarm: false,
+    name: medicine?.name || "",
+    dose: medicine?.dose || "",
+    doseUnit: medicine?.doseUnit || DoseUnitEnum.MG,
+    frequency: medicine?.frequency || null,
+    notes: medicine?.notes || "",
+    relatedMedication: medicine?.relatedMedication || "",
+    epilepsyChipSelected: medicine?.isForEpilepsy ?? true,
+    otherChipSelected: !(medicine?.isForEpilepsy ?? true),
+    setAlarm: medicine?.isAlarmSet || false,
   });
 
-  const [timeList, setTimeList] = useState<string[]>([""]); // Initialize with one empty time input
+  // Pre-fill the timeList with medicine times or initialize with one empty time input
+  const [timeList, setTimeList] = useState<string[]>(medicine?.times || [""]);
   const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState(false);
 
   const handleChipPress = (chip: ChipType) => {

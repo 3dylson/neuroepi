@@ -29,6 +29,9 @@ export default function FormMedication({
   isFabVisible = true,
 }: FormMedicationProps) {
   const [medicineList, setMedicineList] = useState<Medicine[]>([]);
+  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(
+    null
+  ); // State to track selected medicine for editing
   const params = useLocalSearchParams();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -36,23 +39,41 @@ export default function FormMedication({
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
   const snapPoints = useMemo(() => ["95%"], []);
 
-  // Function to handle AddCard press
+  // Function to handle AddCard press (for adding new medicine)
   const handleAddCardPress = () => {
+    setSelectedMedicine(null); // Reset selected medicine when adding a new one
     setIsBottomSheetVisible(true); // Show bottom sheet
+  };
+
+  // Function to handle when a MedicineCard is clicked (for editing existing medicine)
+  const handleMedicineCardClick = (medicine: Medicine) => {
+    setSelectedMedicine(medicine); // Set the selected medicine
+    setIsBottomSheetVisible(true); // Show the bottom sheet in edit mode
   };
 
   const handleOnSavePress = useCallback(
     async (newMedicine: Medicine) => {
-      setMedicineList((prevList) => [...prevList, newMedicine]);
+      let updatedList;
+      if (selectedMedicine) {
+        // If editing, replace the existing medicine
+        updatedList = medicineList.map((med) =>
+          med.id === selectedMedicine.id ? newMedicine : med
+        );
+      } else {
+        // If adding a new medicine
+        updatedList = [...medicineList, newMedicine];
+      }
+      setMedicineList(updatedList);
+
       const user = await User.getFromLocal(); // Retrieve user data
       if (user) {
         await user.updateUserData({
-          medicines: [...medicineList, newMedicine],
-        }); // Update user data with new medicine
+          medicines: updatedList,
+        }); // Update user data with new/edited medicine
       }
       handleClosePress();
     },
-    [medicineList]
+    [medicineList, selectedMedicine]
   );
 
   useEffect(() => {
@@ -140,6 +161,7 @@ export default function FormMedication({
             times={medicine.times}
             icon={require("@/assets/images/pills.png")}
             onDelete={handleMedicineDelete}
+            onClickCallback={() => handleMedicineCardClick(medicine)} // Pass the selected medicine when card is clicked
           />
         ))}
         <AddCard
@@ -169,6 +191,7 @@ export default function FormMedication({
             <BottomSheetAddMedicineScreen
               onClose={handleClosePress}
               onSave={handleOnSavePress}
+              medicine={selectedMedicine ?? undefined} // Pass the selected medicine to the bottom sheet (or null for adding new)
             />
           </BottomSheetScrollView>
         </BottomSheet>
