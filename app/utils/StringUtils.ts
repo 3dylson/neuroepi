@@ -23,7 +23,8 @@ String.prototype.isNullOrEmpty = function (): boolean {
   return this == null || this.trim() === "";
 };
 
-// Example usage:
-const timeString = "14h:30m";
-const date = timeString.toDateFromHourMinuteString();
-console.log(date);
+// Simple phone validation (allows digits, spaces, dashes, etc.)
+export const PhoneRegex = /^[0-9-+\s()]*$/;
+
+// Standard email validation regex
+export const EmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

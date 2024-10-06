@@ -19,6 +19,7 @@ import BottomSheet, {
 import BottomSheetAddMedicineScreen from "./bottom_sheet_add_medicine";
 import MedicineCard from "@/components/MedicineCard";
 import { Medicine } from "../model/Medicine";
+import { User } from "../model/User";
 
 interface FormMedicationProps {
   isFabVisible?: boolean;
@@ -29,29 +30,30 @@ export default function FormMedication({
 }: FormMedicationProps) {
   const [medicineList, setMedicineList] = useState<Medicine[]>([]);
   const params = useLocalSearchParams();
-  // ref for bottom sheet
   const bottomSheetRef = useRef<BottomSheet>(null);
-  // ref for scroll view
   const scrollViewRef = useRef<ScrollView>(null);
-  // state to control bottom sheet visibility
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
   const snapPoints = useMemo(() => ["95%"], []);
-
-  // callbacks for bottom sheet
-  const handleSheetChanges = useCallback((index: number) => {
-    //console.log("handleSheetChanges", index);
-  }, []);
 
   // Function to handle AddCard press
   const handleAddCardPress = () => {
     setIsBottomSheetVisible(true); // Show bottom sheet
   };
 
-  const handleOnSavePress = useCallback((newMedicine: Medicine) => {
-    setMedicineList((prevList) => [...prevList, newMedicine]);
-    handleClosePress();
-  }, []);
+  const handleOnSavePress = useCallback(
+    async (newMedicine: Medicine) => {
+      setMedicineList((prevList) => [...prevList, newMedicine]);
+      const user = await User.getFromLocal(); // Retrieve user data
+      if (user) {
+        await user.updateUserData({
+          medicines: [...medicineList, newMedicine],
+        }); // Update user data with new medicine
+      }
+      handleClosePress();
+    },
+    [medicineList]
+  );
 
   useEffect(() => {
     if (medicineList.length > 0) {
@@ -61,11 +63,29 @@ export default function FormMedication({
     }
   }, [medicineList]);
 
-  const handleMedicineDelete = useCallback((id: string) => {
-    setMedicineList((prevList) =>
-      prevList.filter((medicine) => medicine.id !== id)
-    );
+  // Retrieve saved medicines when the component mounts
+  useEffect(() => {
+    const loadUserData = async () => {
+      const savedUser = await User.getFromLocal(); // Fetch saved user
+      if (savedUser?.medicines) {
+        setMedicineList(savedUser.medicines); // Populate the medicines list
+      }
+    };
+    loadUserData();
   }, []);
+
+  // Handle medicine delete and update user data
+  const handleMedicineDelete = useCallback(
+    async (id: string) => {
+      const updatedList = medicineList.filter((medicine) => medicine.id !== id);
+      setMedicineList(updatedList);
+      const user = await User.getFromLocal(); // Retrieve user data
+      if (user) {
+        await user.updateUserData({ medicines: updatedList }); // Update user data after deletion
+      }
+    },
+    [medicineList]
+  );
 
   const handleClosePress = useCallback(() => {
     bottomSheetRef.current?.close();
@@ -139,7 +159,6 @@ export default function FormMedication({
       {isBottomSheetVisible && (
         <BottomSheet
           ref={bottomSheetRef}
-          onChange={handleSheetChanges}
           backdropComponent={renderBackdrop}
           enablePanDownToClose={true}
           index={0}

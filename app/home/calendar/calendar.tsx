@@ -7,7 +7,7 @@ import {
   AgendaSchedule,
 } from "react-native-calendars";
 import calendarIDs from "./calendarIDs";
-import { DoseFrequency } from "@/constants/DoseFrequency"; // Import DoseFrequency if needed
+import { DoseFrequency } from "@/constants/DoseFrequency";
 import { User } from "@/app/model/User";
 import { Medicine } from "@/app/model/Medicine";
 

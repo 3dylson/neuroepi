@@ -7,13 +7,15 @@ import { Colors } from "@/constants/Colors";
 import { SurgeryNeurostimulatorEnum } from "@/constants/SurgeryNeurostimulatorEnum";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
 import Dialog from "react-native-dialog";
+import { User } from "../model/User";
 
 export default function FormSurgeryNeurostimulator() {
-  const [option, setOption] = useState("");
-  const params = useLocalSearchParams();
+  const [option, setOption] = useState<SurgeryNeurostimulatorEnum | "">("");
   const [visible, setVisible] = useState(false);
-  const [surgeryInputValue, setSurgeryInputValue] = useState("");
+  const [surgeryInputValue, setSurgeryInputValue] = useState<string>("");
+  const params = useLocalSearchParams();
 
+  // Show surgery input dialog
   const showSurgeryDialog = () => {
     setVisible(true);
   };
@@ -28,14 +30,34 @@ export default function FormSurgeryNeurostimulator() {
 
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
 
+  // Handle radio button press
   const handleOnChipPress = (selected: SurgeryNeurostimulatorEnum) => {
-    console.log(selected);
     if (selected === SurgeryNeurostimulatorEnum.SURGERY) {
-      showSurgeryDialog();
+      showSurgeryDialog(); // Show surgery input dialog
     }
     setOption(selected);
   };
 
+  // Load user data on mount and populate the form
+  useEffect(() => {
+    const loadUserData = async () => {
+      const savedUser = await User.getFromLocal(); // Retrieve saved user data
+      if (savedUser?.surgery && savedUser.surgery.length > 0) {
+        setOption(SurgeryNeurostimulatorEnum.SURGERY);
+        setSurgeryInputValue(savedUser.surgery[0]); // Set surgery value
+      } else if (
+        savedUser?.neurostimulators &&
+        savedUser.neurostimulators.length > 0
+      ) {
+        setOption(savedUser.neurostimulators[0] as SurgeryNeurostimulatorEnum); // Set neurostimulator value
+      } else {
+        setOption(SurgeryNeurostimulatorEnum.NONE); // Default to "None"
+      }
+    };
+    loadUserData();
+  }, []);
+
+  // Show info dialog if needed
   useEffect(() => {
     if (params.showHelpDialog === "true") {
       RegisterInfoAlert(
@@ -44,6 +66,35 @@ export default function FormSurgeryNeurostimulator() {
       closeDialog();
     }
   }, [params.showHelpDialog]);
+
+  // Handle saving data and navigate to the next screen
+  const handleContinue = async () => {
+    let user = await User.getFromLocal();
+
+    if (!user) {
+      user = new User({
+        surgery:
+          option === SurgeryNeurostimulatorEnum.SURGERY
+            ? [surgeryInputValue]
+            : [],
+        neurostimulators: [option] as SurgeryNeurostimulatorEnum[],
+      });
+    } else {
+      await user.updateUserData({
+        surgery:
+          option === SurgeryNeurostimulatorEnum.SURGERY
+            ? [surgeryInputValue]
+            : [],
+        neurostimulators:
+          option !== SurgeryNeurostimulatorEnum.SURGERY &&
+          option !== SurgeryNeurostimulatorEnum.NONE
+            ? [option]
+            : [],
+      });
+    }
+
+    router.push("/register/form_doctor_contact"); // Navigate to the next screen
+  };
 
   return (
     <View style={FormStyles.container}>
@@ -62,7 +113,6 @@ export default function FormSurgeryNeurostimulator() {
         <Text variant="headlineSmall" style={FormStyles.title}>
           Cirurgia / Neuroestimuladores:
         </Text>
-        <Text style={FormStyles.subtitle} children={undefined}></Text>
         <RadioButton.Group
           onValueChange={(value) =>
             handleOnChipPress(
@@ -94,7 +144,7 @@ export default function FormSurgeryNeurostimulator() {
       <FAB
         icon="arrow-right"
         style={FormStyles.fab}
-        onPress={() => router.push("/register/form_doctor_contact")}
+        onPress={handleContinue} // Save and continue
       />
     </View>
   );

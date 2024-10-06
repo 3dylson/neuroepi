@@ -4,14 +4,61 @@ import { router, useLocalSearchParams } from "expo-router";
 import { FormStyles } from "./styles/FormStyle";
 import { View } from "react-native";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
+import { PhoneRegex } from "../utils/StringUtils";
+import { User } from "../model/User";
 
 export default function FormDoctorContact() {
-  const [phone1, setPhone1] = useState("");
-  const [phone2, setPhone2] = useState("");
+  const [phone1, setPhone1] = useState<string>("");
+  const [phone2, setPhone2] = useState<string>("");
+  const [phone1Error, setPhone1Error] = useState<string>("");
+  const [phone2Error, setPhone2Error] = useState<string>("");
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
   const params = useLocalSearchParams();
 
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
 
+  // Phone validation using regex
+  const validatePhone = (input: string): boolean => {
+    const phoneRegex = PhoneRegex;
+    if (!input.match(phoneRegex)) {
+      return false;
+    }
+    return true;
+  };
+
+  const handlePhone1Change = (text: string) => {
+    setPhone1(text);
+    if (!validatePhone(text)) {
+      setPhone1Error("Telefone inválido.");
+    } else {
+      setPhone1Error("");
+    }
+  };
+
+  const handlePhone2Change = (text: string) => {
+    setPhone2(text);
+    if (text && !validatePhone(text)) {
+      setPhone2Error("Telefone inválido.");
+    } else {
+      setPhone2Error("");
+    }
+  };
+
+  // Load user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      const savedUser = await User.getFromLocal();
+      if (savedUser?.medicPhone) {
+        setPhone1(savedUser.medicPhone);
+      }
+      if (savedUser?.medicPhone2) {
+        setPhone2(savedUser.medicPhone2);
+      }
+    };
+    loadUserData();
+  }, []);
+
+  // Show help dialog if necessary
   useEffect(() => {
     if (params.showHelpDialog === "true") {
       RegisterInfoAlert(
@@ -20,6 +67,31 @@ export default function FormDoctorContact() {
       closeDialog();
     }
   }, [params.showHelpDialog]);
+
+  // Validate form
+  useEffect(() => {
+    setIsFormValid(
+      !phone1Error &&
+        validatePhone(phone1) &&
+        (!phone2 || validatePhone(phone2))
+    );
+  }, [phone1, phone2, phone1Error, phone2Error]);
+
+  // Handle saving the doctor contacts
+  const handleContinue = async () => {
+    if (!isFormValid) {
+      return;
+    }
+
+    let user = await User.getFromLocal();
+    if (!user) {
+      user = new User({ medicPhone: phone1, medicPhone2: phone2 });
+    } else {
+      await user.updateUserData({ medicPhone: phone1, medicPhone2: phone2 });
+    }
+
+    router.replace("/home"); // Navigate to the home page
+  };
 
   return (
     <View style={FormStyles.container}>
@@ -36,22 +108,32 @@ export default function FormDoctorContact() {
           label="Médico 1"
           keyboardType="phone-pad"
           value={phone1}
-          onChangeText={(text) => setPhone1(text)}
+          onChangeText={handlePhone1Change}
           style={FormStyles.input}
+          error={!!phone1Error} // Show error state if phone1 is invalid
         />
+        {phone1Error ? (
+          <Text style={{ color: "red", marginBottom: 16 }}>{phone1Error}</Text>
+        ) : null}
+
         <TextInput
           mode="outlined"
           label="Médico 2 (Opcional)"
           keyboardType="phone-pad"
           value={phone2}
-          onChangeText={(text) => setPhone2(text)}
+          onChangeText={handlePhone2Change}
           style={FormStyles.input}
+          error={!!phone2Error} // Show error state if phone2 is invalid
         />
+        {phone2Error ? (
+          <Text style={{ color: "red" }}>{phone2Error}</Text>
+        ) : null}
       </View>
       <FAB
         icon="arrow-right"
         style={FormStyles.fab}
-        onPress={() => router.replace("/home")}
+        disabled={!isFormValid} // Disable FAB if form is invalid
+        onPress={handleContinue}
       />
     </View>
   );

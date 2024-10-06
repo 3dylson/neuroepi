@@ -6,27 +6,29 @@ import { Platform, TouchableOpacity, View } from "react-native";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 import { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import { User } from "../model/User";
 
 export default function FormDiagnosis() {
-  const [diagnosis, setDiagnosis] = useState("");
-  const [diagnosisDate, setDiagnosisDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [diagnosis, setDiagnosis] = useState<string>("");
+  const [diagnosisDate, setDiagnosisDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const params = useLocalSearchParams();
 
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
 
-  const handleDateChange = (
-    event: DateTimePickerEvent,
-    selectedDate?: Date
-  ) => {
-    console.log(selectedDate);
-    setShowDatePicker(Platform.OS === "ios");
-    setDiagnosisDate(selectedDate || diagnosisDate);
-  };
-
-  const handleTextInputClick = () => {
-    setShowDatePicker(true);
-  };
+  // Retrieve saved user data on mount and populate form fields
+  useEffect(() => {
+    const loadUserData = async () => {
+      const savedUser = await User.getFromLocal(); // Fetch saved user
+      if (savedUser?.diagnostic) {
+        setDiagnosis(savedUser.diagnostic); // Populate diagnosis
+      }
+      if (savedUser?.diagnosticDate) {
+        setDiagnosisDate(new Date(savedUser.diagnosticDate)); // Populate diagnosis date
+      }
+    };
+    loadUserData();
+  }, []);
 
   useEffect(() => {
     if (params.showHelpDialog === "true") {
@@ -37,13 +39,44 @@ export default function FormDiagnosis() {
     }
   }, [params.showHelpDialog]);
 
+  // Handle date change
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
+    setShowDatePicker(Platform.OS === "ios");
+    setDiagnosisDate(selectedDate || diagnosisDate);
+  };
+
+  const handleTextInputClick = () => {
+    setShowDatePicker(true);
+  };
+
+  // Save or update user data and navigate to the next screen
+  const handleContinue = async () => {
+    let user = await User.getFromLocal();
+
+    if (!user) {
+      user = new User({
+        diagnostic: diagnosis,
+        diagnosticDate: diagnosisDate,
+      });
+    } else {
+      await user.updateUserData({
+        diagnostic: diagnosis,
+        diagnosticDate: diagnosisDate,
+      });
+    }
+
+    router.push("/register/form_medication"); // Navigate to the next screen
+  };
+
   return (
     <View style={FormStyles.container}>
       <View style={FormStyles.content}>
         <Text variant="headlineSmall" style={FormStyles.title}>
           Qual é o seu diagnóstico?
         </Text>
-        <Text style={FormStyles.subtitle} children={undefined}></Text>
         <TextInput
           mode="outlined"
           label="Diagnóstico"
@@ -86,7 +119,7 @@ export default function FormDiagnosis() {
       <FAB
         icon="arrow-right"
         style={FormStyles.fab}
-        onPress={() => router.push("/register/form_medication")}
+        onPress={handleContinue} // Save and continue
       />
     </View>
   );
