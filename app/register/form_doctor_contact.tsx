@@ -6,6 +6,8 @@ import { View } from "react-native";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
 import { PhoneRegex } from "../utils/StringUtils";
 import { User } from "../model/User";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DataKey } from "@/constants/DataKey";
 
 export default function FormDoctorContact() {
   const [phone1, setPhone1] = useState<string>("");
@@ -20,10 +22,7 @@ export default function FormDoctorContact() {
   // Phone validation using regex
   const validatePhone = (input: string): boolean => {
     const phoneRegex = PhoneRegex;
-    if (!input.match(phoneRegex)) {
-      return false;
-    }
-    return true;
+    return phoneRegex.test(input);
   };
 
   const handlePhone1Change = (text: string) => {
@@ -41,6 +40,19 @@ export default function FormDoctorContact() {
       setPhone2Error("Telefone inválido.");
     } else {
       setPhone2Error("");
+    }
+  };
+
+  // Method to save the userFormIsComplete flag
+  const setUserFormComplete = async () => {
+    try {
+      await AsyncStorage.setItem(
+        DataKey.userFormIsComplete,
+        DataKey.userFormIsComplete
+      );
+      console.log("User form marked as complete");
+    } catch (e) {
+      console.error("Failed to set user form as complete:", e);
     }
   };
 
@@ -89,6 +101,9 @@ export default function FormDoctorContact() {
     } else {
       await user.updateUserData({ medicPhone: phone1, medicPhone2: phone2 });
     }
+
+    // Mark the user form as complete
+    await setUserFormComplete();
 
     router.replace("/home"); // Navigate to the home page
   };
