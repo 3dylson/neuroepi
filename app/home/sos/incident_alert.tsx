@@ -13,49 +13,53 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
 import { LinearGradient } from "expo-linear-gradient";
 import Chroma from "chroma-js";
+import { User } from "@/app/model/User";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
 
 // Define vivid alert colors and spectrum lengths
-const TOP_COLORS = [
-  "#FF3D00",
-  "#FF6F00",
-  "#FF9100",
-  "#FFAB00",
-  "#FFC400",
-  "#FFD600",
-  "#FFEB3B",
-];
-const BOTTOM_COLORS = [
-  "#FF6F00",
-  "#FF9100",
-  "#FFAB00",
-  "#FFC400",
-  "#FFD600",
-  "#FFEB3B",
-  "#FF3D00",
-];
-const GRADIENT_COLOR_LENGTH = 700;
+const TOP_COLORS = ["#FF3D00", "#FF6F00", "#FFC400", "#FFEB3B"];
+const BOTTOM_COLORS = ["#FF6F00", "#FF9100", "#FFD600", "#FF3D00"];
+const GRADIENT_COLOR_LENGTH = 200; // Reduced gradient length for performance
 const TOP_COLORS_SPECTRUM = Chroma.scale(TOP_COLORS).colors(
   GRADIENT_COLOR_LENGTH
 );
 const BOTTOM_COLORS_SPECTRUM = Chroma.scale(BOTTOM_COLORS).colors(
   GRADIENT_COLOR_LENGTH
 );
-const INTERVAL = 55; // Reduced interval for faster color transition
+const INTERVAL = 200; // Increased interval to reduce load
 
 const IncidentAlertScreen: React.FC = () => {
   const navigation = useNavigation();
-  const emergencyContactNumber = "+123456789"; // Replace with actual contact number
+  const [emergencyContactNumber, setEmergencyContactNumber] = useState<
+    string | null
+  >(null); // Retrieve this dynamically
 
-  const [topIndex, setTopIndex] = useState(0);
-  const [bottomIndex, setBottomIndex] = useState(0);
+  // Function to retrieve user's emergency contact from storage
+  const loadUserEmergencyContact = async () => {
+    const savedUser = await User.getFromLocal();
+    if (savedUser && savedUser.emergencyContact) {
+      setEmergencyContactNumber(savedUser.emergencyContact);
+    } else {
+      setEmergencyContactNumber(null); // Handle missing contact
+    }
+  };
+
+  // Load emergency contact on component mount
+  useEffect(() => {
+    loadUserEmergencyContact();
+  }, []);
 
   // Function to send emergency SMS or WhatsApp
   const sendEmergencyMessage = () => {
+    if (!emergencyContactNumber) {
+      Alert.alert("Nenhum contato de emergência encontrado.");
+      return;
+    }
+
     const message =
-      "I need help! This is an emergency. Please contact me immediately.";
+      "Estou a ter uma crise epiléptica. Por favor, ajuda-me. Localização atual:";
 
     const sendSMS = () => {
       const smsLink = `sms:${emergencyContactNumber}?body=${message}`;
@@ -67,10 +71,11 @@ const IncidentAlertScreen: React.FC = () => {
     const sendWhatsApp = () => {
       const whatsappLink = `whatsapp://send?phone=${emergencyContactNumber}&text=${message}`;
       Linking.openURL(whatsappLink).catch(() => {
-        Alert.alert("WhatsApp not installed.");
+        Alert.alert("WhatsApp não instalado.");
       });
     };
 
+    //TODO: Decide which platform to use based on user preference
     if (Platform.OS === "android") {
       sendWhatsApp();
     } else {
@@ -88,6 +93,9 @@ const IncidentAlertScreen: React.FC = () => {
     return () => clearInterval(interval); // Cleanup interval on unmount
   }, []); // Run effect only once, when the component mounts
 
+  const [topIndex, setTopIndex] = useState(0);
+  const [bottomIndex, setBottomIndex] = useState(0);
+
   // Calculate colors based on indices without storing them in state
   const colorTop = TOP_COLORS_SPECTRUM[topIndex];
   const colorBottom = BOTTOM_COLORS_SPECTRUM[bottomIndex];
@@ -104,19 +112,28 @@ const IncidentAlertScreen: React.FC = () => {
       <PulsatingButton
         animation="pulse"
         iterationCount="infinite"
+        duration={1000} // Slow down the animation for better performance
         style={styles.emergencyButton}
         onPress={openEmergencySheet}
         accessible={true} // Make the button accessible
         accessibilityLabel="Ver ficha de emergência" // Provide context for screen readers
-        accessibilityHint="Press to view emergency details" // Explain the action
+        accessibilityHint="Pressione para ver detalhes de emergência" // Explain the action
       >
         <MaterialCommunityIcons name="alert-circle" size={40} color="white" />
         <Text style={styles.buttonText}>Ver Ficha de Emergência</Text>
       </PulsatingButton>
 
-      <Text style={styles.instructionText}>
+      {/* <Text style={styles.instructionText}>
         Seu alerta foi enviado para seus contatos de emergência.
-      </Text>
+      </Text> */}
+
+      {/* Button to trigger emergency message */}
+      <TouchableOpacity
+        style={styles.sendButton}
+        onPress={sendEmergencyMessage}
+      >
+        <Text style={styles.sendButtonText}>Enviar mensagem de emergência</Text>
+      </TouchableOpacity>
     </LinearGradient>
   );
 };
@@ -140,13 +157,9 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     paddingVertical: 20,
     paddingHorizontal: 50,
-    elevation: 10,
+    elevation: 5, // Reduced elevation to lighten load
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
     minWidth: 200, // Ensure the button is wide enough
     height: 80, // Ensure the button is tall enough for easy tapping
   },
@@ -161,6 +174,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
     textAlign: "center",
+  },
+  sendButton: {
+    marginTop: 40,
+    backgroundColor: "#FF3D00",
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+  },
+  sendButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

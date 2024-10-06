@@ -27,7 +27,11 @@ export default function ProfileScreen() {
       {/* Profile Picture */}
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
-          <IconButton icon="account" size={80} iconColor="white" />
+          <IconButton
+            icon="account"
+            size={80}
+            iconColor={Colors.light.onPrimaryContainer}
+          />
         </View>
         {/* Display first and last name */}
         <Text style={styles.username}>
@@ -35,47 +39,53 @@ export default function ProfileScreen() {
         </Text>
       </View>
 
-      {/* Registered Crisis and Patient Information section */}
-      <TouchableOpacity onPress={() => {}}>
-        <Card style={styles.card}>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardText}>Registered Crisis</Text>
-            <IconButton icon="chevron-right" size={24} onPress={() => {}} />
-          </View>
-        </Card>
-      </TouchableOpacity>
+      {/* Group 1: Registered Crisis and Patient Information */}
+      <View style={styles.cardGroup}>
+        <TouchableOpacity onPress={() => {}}>
+          <Card style={styles.card}>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardText}>Crises Registradas</Text>
+              <IconButton icon="chevron-right" size={24} onPress={() => {}} />
+            </View>
+          </Card>
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => {}}>
-        <Card style={styles.card}>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardText}>Patient Information</Text>
-            <IconButton icon="chevron-right" size={24} onPress={() => {}} />
-          </View>
-        </Card>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => {}}>
+          <Card style={styles.card}>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardText}>Minhas Informações</Text>
+              <IconButton icon="chevron-right" size={24} onPress={() => {}} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+      </View>
 
-      {/* Share Medical Record and Settings section */}
-      <TouchableOpacity
-        onPress={() => {
-          /* Implement share functionality */
-        }}
-      >
-        <Card style={styles.card}>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardText}>Share my medical record</Text>
-            <IconButton icon="share" size={24} onPress={() => {}} />
-          </View>
-        </Card>
-      </TouchableOpacity>
+      {/* Group 2: Share Medical Record and Settings */}
+      <View style={styles.cardGroup}>
+        <TouchableOpacity
+          onPress={() => {
+            /* Implement share functionality */
+          }}
+        >
+          <Card style={styles.card}>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardText}>
+                Compartilhar meu registro médico
+              </Text>
+              <IconButton icon="share" size={24} onPress={() => {}} />
+            </View>
+          </Card>
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => {}}>
-        <Card style={styles.card}>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardText}>Settings</Text>
-            <IconButton icon="cog" size={24} onPress={() => {}} />
-          </View>
-        </Card>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => {}}>
+          <Card style={styles.card}>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardText}>Configurações da app</Text>
+              <IconButton icon="cog" size={24} onPress={() => {}} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -103,9 +113,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
+  cardGroup: {
+    marginVertical: 16,
+  },
   card: {
     backgroundColor: Colors.light.primaryContainer,
-    marginVertical: 12,
+    marginVertical: 8,
     borderRadius: 8,
   },
   cardContent: {
