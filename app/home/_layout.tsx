@@ -13,6 +13,7 @@ export default function HomeLayout() {
       <Stack.Screen name="sos/incident_alert" />
       <Stack.Screen name="medicine/medicines" />
       <Stack.Screen name="calendar/calendar" />
+      <Stack.Screen name="profile/profile" />
     </Stack>
   );
 }

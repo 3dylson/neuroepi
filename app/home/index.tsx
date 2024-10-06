@@ -18,7 +18,10 @@ const HomeLayout: React.FC = () => {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <IconButton icon="account-circle" onPress={() => {}} />
+        <IconButton
+          icon="account-circle"
+          onPress={() => router.push("/home/profile/profile")}
+        />
       ),
     });
   }, [navigation]);
