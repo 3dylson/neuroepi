@@ -9,7 +9,7 @@ import {
   Divider,
   Card,
 } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Crise } from "@/app/model/Crise";
 import { generateId } from "@/app/utils/Utils";
@@ -163,7 +163,7 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
     });
 
     await Crise.addOrUpdateCrise(newCrise);
-    // Redirect or show success message
+    router.back();
   };
 
   return (
