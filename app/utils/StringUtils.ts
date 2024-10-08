@@ -4,8 +4,17 @@ declare global {
   interface String {
     toDateFromHourMinuteString(): Date;
     isNullOrEmpty(): boolean;
+    orDefault(value: string): string;
   }
 }
+
+String.prototype.orDefault = function (value: string): string {
+  if (this.isNullOrEmpty()) {
+    return value;
+  } else {
+    return String(this);
+  }
+};
 
 String.prototype.toDateFromHourMinuteString = function (): Date {
   const [hours, minutes] = this.split("h:").map((part) =>

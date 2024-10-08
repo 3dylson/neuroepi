@@ -51,7 +51,7 @@ const HomeLayout: React.FC = () => {
       <View style={styles.gridContainer}>
         <TouchableOpacity
           style={styles.card}
-          onPress={() => router.push("/home/crise/crise_form")}
+          onPress={() => router.push("/home/crise/crisis_list")}
         >
           <Text style={styles.cardEmoji}>🚑</Text>
           <Text style={styles.cardText}>Crises</Text>

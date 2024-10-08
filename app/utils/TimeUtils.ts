@@ -13,6 +13,7 @@ declare global {
      * @returns {string}
      */
     toDayMonthNameYearString(abbreviatedName: boolean): string;
+    getAge(): number;
   }
 }
 
@@ -39,6 +40,23 @@ Date.prototype.toDayMonthNameYearString = function (
     month: abbreviatedName ? "short" : "long",
   });
   return `${day} ${monthName} ${year}`;
+};
+
+/**
+ * Returns the age of the date in years.
+ * @returns {number}
+ * @example new Date(2000, 0, 1).getAge() // returns 21 if today is 1 Jan 2021
+ */
+Date.prototype.getAge = function (): number {
+  const now = new Date();
+  const age = now.getFullYear() - this.getFullYear();
+  if (
+    now.getMonth() < this.getMonth() ||
+    (now.getMonth() === this.getMonth() && now.getDate() < this.getDate())
+  ) {
+    return age - 1;
+  }
+  return age;
 };
 
 // Example usage:

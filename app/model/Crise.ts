@@ -13,8 +13,10 @@ export class Crise {
   tookMedication?: boolean;
   whatWasDoing?: string;
   menstruationOrPregnancy?: string;
+  recentChangeOnMedication?: boolean;
+  sleepStatus?: string;
   alcohol?: boolean;
-  food?: boolean;
+  food?: string;
   emotionalStress?: string;
   substanceUse?: boolean;
   selfHarm?: boolean;
