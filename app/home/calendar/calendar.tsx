@@ -14,11 +14,13 @@ import { Crise } from "@/app/model/Crise"; // Import Crise
 
 interface State {
   items?: AgendaSchedule;
+  markedDates: { [key: string]: any }; // To hold marked dates
 }
 
 export default class CalendarScreen extends Component<State> {
   state: State = {
     items: undefined,
+    markedDates: {}, // Initialize empty marked dates
   };
 
   componentDidMount() {
@@ -30,26 +32,57 @@ export default class CalendarScreen extends Component<State> {
     const user = await User.getFromLocal(); // Fetch user data
     const crises = await Crise.getCrises(); // Fetch crises data
 
-    if (user && user.medicines) {
-      const items = this.state.items || {};
-      const today = new Date(); // Get today's date
+    const items = this.state.items || {};
+    const markedDates: { [key: string]: any } = {}; // For holding the dates with crises and medicines marked
+    const today = new Date(); // Get today's date
 
-      // Add medicines to the calendar
+    // Add medicines to the calendar and mark the dates
+    if (user && user.medicines) {
       user.medicines.forEach((medicine) => {
         this.addMedicineToCalendar(items, medicine, today);
-      });
 
-      // Add crises to the calendar
-      if (crises) {
-        crises.forEach((crise) => {
-          this.addCriseToCalendar(items, crise);
+        // Mark the date with a green dot for medicines
+        const medicineDates = this.getMedicineDates(medicine, today); // A helper to get all dates for medicines
+        medicineDates.forEach((strTime) => {
+          if (!markedDates[strTime]) {
+            markedDates[strTime] = { dots: [] };
+          }
+          markedDates[strTime].dots.push({ color: "green" });
         });
-      }
-
-      this.setState({ items });
-    } else {
-      Alert.alert("Nenhum dado de usuário encontrado");
+      });
     }
+
+    // Add crises to the calendar and mark the dates
+    if (crises) {
+      crises.forEach((crise) => {
+        this.addCriseToCalendar(items, crise);
+
+        // Mark the date with a red dot for crises
+        const strTime = this.timeToString(new Date(crise.dateTime!).getTime());
+        if (!markedDates[strTime]) {
+          markedDates[strTime] = { dots: [] };
+        }
+        markedDates[strTime].dots.push({ color: "red" });
+      });
+    }
+
+    this.setState({ items, markedDates });
+  };
+
+  // A helper function to get all the dates when a medicine should appear on the calendar
+  getMedicineDates = (medicine: Medicine, startDate: Date) => {
+    const dates: string[] = [];
+    let currentDate = new Date(startDate);
+    const daysToGenerate = 30; // Number of days to generate
+
+    for (let i = 0; i < daysToGenerate; i++) {
+      if (this.isMedicineDueOnDate(medicine, currentDate)) {
+        dates.push(this.timeToString(currentDate.getTime()));
+      }
+      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+    }
+
+    return dates;
   };
 
   // Add medicine to the calendar based on its frequency and times
@@ -120,6 +153,8 @@ export default class CalendarScreen extends Component<State> {
       <Agenda
         testID={calendarIDs.agenda.CONTAINER}
         items={this.state.items}
+        markedDates={this.state.markedDates} // Mark dates with crises
+        markingType={"multi-dot"} // Allow multiple dots
         loadItemsForMonth={this.loadItems}
         selected={this.timeToString(new Date().getTime())} // Set today's date as selected
         renderItem={this.renderItem}
@@ -184,13 +219,5 @@ const styles = StyleSheet.create({
     height: 15,
     flex: 1,
     paddingTop: 30,
-  },
-  customDay: {
-    margin: 10,
-    fontSize: 24,
-    color: "green",
-  },
-  dayItem: {
-    marginLeft: 34,
   },
 });
