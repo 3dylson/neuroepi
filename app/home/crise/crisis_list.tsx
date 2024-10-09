@@ -1,7 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, SectionList, StyleSheet, Text } from "react-native";
-import { FAB, Card, Paragraph, Caption, Button } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import {
+  FAB,
+  Card,
+  Paragraph,
+  Caption,
+  Button,
+  IconButton,
+} from "react-native-paper";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { format, compareDesc } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { Crise } from "@/app/model/Crise";
@@ -49,21 +56,34 @@ const CrisisListScreen: React.FC = () => {
   useEffect(() => {
     navigation.setOptions({
       headerTitle: "Crises",
+      // headerRight: () => (
+      //   <IconButton icon="delete" onPress={() => Crise.deleteAllCrises()} />
+      // ),
     });
   }, [navigation]);
 
-  useEffect(() => {
-    // Fetch crises when the screen loads
-    const fetchCrises = async () => {
-      const retrievedCrises = await Crise.getCrises();
-      if (retrievedCrises) {
-        const groupedCrises = groupCrisesByDate(retrievedCrises);
-        setSections(groupedCrises);
-      }
-    };
+  // Function to fetch crises
+  const fetchCrises = async () => {
+    const retrievedCrises = await Crise.getCrises();
+    if (retrievedCrises) {
+      const groupedCrises = groupCrisesByDate(retrievedCrises);
+      setSections(groupedCrises);
+    }
+  };
 
-    fetchCrises();
-  }, []);
+  const seeDetails = (item: Crise) => {
+    router.push({
+      pathname: "/home/crise/crise_form",
+      params: { id: item.id },
+    });
+  };
+
+  // Use useFocusEffect to refetch crises whenever the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchCrises();
+    }, [])
+  );
 
   const renderCrisisItem = ({ item }: { item: Crise }) => {
     return (
@@ -83,7 +103,7 @@ const CrisisListScreen: React.FC = () => {
         </Card.Content>
         <Card.Actions style={styles.cardActions}>
           <Button
-            onPress={() => console.log("View Details")}
+            onPress={() => seeDetails(item)}
             mode="outlined"
             contentStyle={styles.buttonContent}
             style={styles.button}

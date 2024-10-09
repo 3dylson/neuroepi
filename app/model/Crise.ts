@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DataKey } from "@/constants/DataKey";
 
 export class Crise {
@@ -9,7 +9,7 @@ export class Crise {
   intensity?: string;
   recoverySpeed?: string;
   symptomsBefore?: string[];
-  postState?: string;
+  postState?: string[];
   tookMedication?: boolean;
   whatWasDoing?: string;
   menstruationOrPregnancy?: string;
@@ -25,24 +25,20 @@ export class Crise {
     Object.assign(this, init);
   }
 
-  // Serialize crises and save to local storage
+  // Serialize crises and save to AsyncStorage
   static async saveCrises(crises: Crise[]): Promise<void> {
     try {
-      await SecureStore.setItemAsync(
-        DataKey.CRISES_DATA_KEY,
-        JSON.stringify(crises)
-      );
+      const serializedCrises = JSON.stringify(crises);
+      await AsyncStorage.setItem(DataKey.CRISES_DATA_KEY, serializedCrises);
     } catch (error) {
       console.error("Error saving crises", error);
     }
   }
 
-  // Retrieve the list of crises from local storage
+  // Retrieve the list of crises from AsyncStorage
   static async getCrises(): Promise<Crise[] | null> {
     try {
-      const crisesData = await SecureStore.getItemAsync(
-        DataKey.CRISES_DATA_KEY
-      );
+      const crisesData = await AsyncStorage.getItem(DataKey.CRISES_DATA_KEY);
       return crisesData
         ? JSON.parse(crisesData).map((c: Crise) => new Crise(c))
         : null;
@@ -64,10 +60,19 @@ export class Crise {
     await Crise.saveCrises(crises);
   }
 
-  // Delete a crise
+  // Delete a crise by ID
   static async deleteCrise(id: string): Promise<void> {
     const crises = (await Crise.getCrises()) || [];
     const updatedCrises = crises.filter((c) => c.id !== id);
     await Crise.saveCrises(updatedCrises);
+  }
+
+  // Delete all crises from AsyncStorage
+  static async deleteAllCrises(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(DataKey.CRISES_DATA_KEY);
+    } catch (error) {
+      console.error("Error deleting all crises", error);
+    }
   }
 }

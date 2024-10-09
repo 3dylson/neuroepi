@@ -1,59 +1,49 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
+import { View, ScrollView, StyleSheet, Alert } from "react-native";
 import {
   Text,
   TextInput,
   RadioButton,
   Checkbox,
   FAB,
-  Divider,
   Card,
+  IconButton,
 } from "react-native-paper";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Crise } from "@/app/model/Crise";
 import { generateId } from "@/app/utils/Utils";
-import { set } from "lodash";
 import { User } from "@/app/model/User";
 import Gender from "@/app/register/utils/GenderEnum";
+import { set } from "lodash";
 
-interface CriseFormScreenProps {
-  crise?: Crise; // Optional crise for editing
-}
+// TODO: This should be done with Enums or Constants
+const CriseFormScreen: React.FC = () => {
+  const params = useLocalSearchParams(); // Get the params from router
+  const navigation = useNavigation();
+  const [crise, setCrise] = useState<Crise | null>(null);
 
-const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
-  const [dateTime, setDateTime] = useState(crise?.dateTime || new Date());
-  const [duration, setDuration] = useState(crise?.duration || "");
-  const [type, setType] = useState(crise?.type || "");
-  const [intensity, setIntensity] = useState(crise?.intensity || "");
-  const [recoverySpeed, setRecoverySpeed] = useState(
-    crise?.recoverySpeed || ""
-  );
-  const [symptomsBefore, setSymptomsBefore] = useState<string[]>(
-    crise?.symptomsBefore || []
-  );
-  const [postState, setPostState] = useState(crise?.postState || "");
+  const [dateTime, setDateTime] = useState(new Date());
+  const [duration, setDuration] = useState("");
+  const [type, setType] = useState("");
+  const [intensity, setIntensity] = useState("");
+  const [recoverySpeed, setRecoverySpeed] = useState("");
+  const [symptomsBefore, setSymptomsBefore] = useState<string[]>([]);
+  const [postState, setPostState] = useState<string[]>([]);
   const [tookMedication, setTookMedication] = useState<boolean | undefined>(
-    crise?.tookMedication || undefined
+    undefined
   );
-  const [whatWasDoing, setWhatWasDoing] = useState(crise?.whatWasDoing || "");
-  const [menstruationOrPregnancy, setMenstruationOrPregnancy] = useState(
-    crise?.menstruationOrPregnancy || ""
-  );
-  const [recentChangeOnMedication, setRecentChangeOnMedication] = useState(
-    crise?.recentChangeOnMedication || false
-  );
-  const [alcohol, setAlcohol] = useState(crise?.alcohol || false);
-  const [food, setFood] = useState(crise?.food || "");
-  const [emotionalStress, setEmotionalStress] = useState(
-    crise?.emotionalStress || ""
-  );
-  const [substanceUse, setSubstanceUse] = useState(
-    crise?.substanceUse || false
-  );
-  const [selfHarm, setSelfHarm] = useState(crise?.selfHarm || false);
+  const [whatWasDoing, setWhatWasDoing] = useState("");
+  const [menstruationOrPregnancy, setMenstruationOrPregnancy] = useState("");
+  const [recentChangeOnMedication, setRecentChangeOnMedication] =
+    useState(false);
+  const [alcohol, setAlcohol] = useState(false);
+  const [food, setFood] = useState("");
+  const [emotionalStress, setEmotionalStress] = useState("");
+  const [substanceUse, setSubstanceUse] = useState(false);
+  const [selfHarm, setSelfHarm] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [sleepStatus, setSleepStatus] = useState(crise?.sleepStatus || "");
+  const [sleepStatus, setSleepStatus] = useState("");
 
   const [couldHaveMenstruation, setCouldHaveMenstruation] =
     useState<boolean>(false);
@@ -61,11 +51,118 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
   const [ateSomethingDifferent, setAteSomethingDifferent] =
     useState<boolean>(false);
 
+  const [doingSomethingDifferent, setDoingSomethingDifferent] =
+    useState<boolean>(false);
+
+  const [othersTypeOfCrisis, setOthersTypeOfCrisis] = useState(false);
+
+  const [othersAuraSymptoms, setOthersAuraSymptoms] = useState<string>("");
+
+  const [othersPostState, setOthersPostState] = useState<string>("");
+
   const [onMyPeriod, setOnMyPeriod] = useState<boolean>(false);
   const [underEmotionalStress, setUnderEmotionalStress] =
     useState<boolean>(false);
 
-  const params = useLocalSearchParams();
+  useEffect(() => {
+    if (params.id) {
+      navigation.setOptions({
+        headerTitle: "Editar Crise",
+        headerRight: () => (
+          <IconButton icon="delete" onPress={() => handleDelete()} />
+        ),
+      });
+    } else {
+      navigation.setOptions({
+        headerRight: () => (
+          <IconButton icon="help-circle" onPress={() => showHelpDialog()} />
+        ),
+      });
+    }
+  }, [navigation]);
+
+  const showHelpDialog = () => {
+    Alert.alert(
+      "Lembre-se",
+      "A ficha de detalhamento de crises é muito importante. Ela irá permitir que seu médico tenha um panorama adequado do que ocorre antes, durante e depois de sua crise. Deve ser preenchida com muita atenção.",
+      [
+        {
+          text: "Entendi",
+          style: "cancel",
+        },
+      ]
+    );
+  };
+
+  const handleDelete = async () => {
+    if (crise) {
+      // present a confirmation dialog
+      Alert.alert(
+        "Excluir Crise",
+        "Tem certeza que deseja excluir esta crise?",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel",
+          },
+          {
+            text: "Excluir",
+            onPress: async () => {
+              await Crise.deleteCrise(crise.id!!);
+              router.back();
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  // Fetch Crise from storage if ID is present in params
+  useEffect(() => {
+    const loadCrise = async () => {
+      if (params.id) {
+        const crises = await Crise.getCrises();
+        const foundCrise = crises?.find((c) => c.id === params.id);
+        if (foundCrise) {
+          console.log("Found Crise:", foundCrise);
+          const date = foundCrise.dateTime
+            ? new Date(foundCrise.dateTime)
+            : new Date();
+          setCrise(foundCrise);
+          // Set form values based on the found Crise
+          setDateTime(date);
+          setDuration(foundCrise.duration || "");
+          handleOthersTypeOfCrisis(foundCrise.type || "");
+          setIntensity(foundCrise.intensity || "");
+          setRecoverySpeed(foundCrise.recoverySpeed || "");
+          let auraSymptoms = foundCrise.symptomsBefore?.filter((s) =>
+            getAuraSymptoms().includes(s)
+          );
+          setSymptomsBefore(auraSymptoms || []);
+          handleSetOthersAuraSymptoms(foundCrise.symptomsBefore || []);
+          let postState = foundCrise.postState?.filter((s) =>
+            getSymptomsAfter().includes(s)
+          );
+          setPostState(postState || []);
+          handleSetOtherPostState(foundCrise.postState || []);
+          setTookMedication(foundCrise.tookMedication || undefined);
+          handleSetWhatWasDoing(foundCrise.whatWasDoing || "");
+          setMenstruationOrPregnancy(foundCrise.menstruationOrPregnancy || "");
+          setRecentChangeOnMedication(
+            foundCrise.recentChangeOnMedication || false
+          );
+          setAlcohol(foundCrise.alcohol || false);
+          setFood(foundCrise.food || "");
+          setEmotionalStress(foundCrise.emotionalStress || "");
+          setSubstanceUse(foundCrise.substanceUse || false);
+          setSelfHarm(foundCrise.selfHarm || false);
+          setSleepStatus(foundCrise.sleepStatus || "");
+        }
+      }
+    };
+
+    loadCrise();
+  }, [params.id]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -93,6 +190,50 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
 
   const handleSetAlcohol = (value: string) => {
     setAlcohol(value === "true");
+  };
+
+  const handleSetOtherPostState = (value: string[]) => {
+    let othersPostState = value.filter((s) => !getSymptomsAfter().includes(s));
+    setOthersPostState(othersPostState.join(", "));
+  };
+
+  const handleSetOthersAuraSymptoms = (value: string[]) => {
+    let othersSymptoms = value.filter((s) => !getAuraSymptoms().includes(s));
+    setOthersAuraSymptoms(othersSymptoms.join(", "));
+  };
+
+  const handleOthersTypeOfCrisis = (value: string) => {
+    let othersTypeOfCrisis = value === "Outras";
+    if (othersTypeOfCrisis) {
+      setType("");
+    } else {
+      setType(value);
+    }
+    let showOthersTypeOfCrisis =
+      othersTypeOfCrisis ||
+      (!matchAnyTypeOfCrisis(value) && value.trim() !== "");
+    console.log("showOthersTypeOfCrisis", showOthersTypeOfCrisis);
+    setOthersTypeOfCrisis(showOthersTypeOfCrisis);
+  };
+
+  const handleSetWhatWasDoing = (value: string) => {
+    let doingSomethingDifferent = value === "Outro";
+    if (doingSomethingDifferent) {
+      setWhatWasDoing("");
+    } else {
+      setWhatWasDoing(value);
+    }
+    let showDoingSomethingDifferent =
+      doingSomethingDifferent ||
+      (!matchAnyTypeOfWasDoing(value) && value.trim() !== "");
+    setDoingSomethingDifferent(showDoingSomethingDifferent);
+  };
+  const matchAnyTypeOfWasDoing = (value: string) => {
+    return getWasDoingTypes().includes(value);
+  };
+
+  const matchAnyTypeOfCrisis = (value: string) => {
+    return getCrisisTypes().includes(value);
   };
 
   const handleSetFood = (value: string) => {
@@ -143,6 +284,19 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
   };
 
   const handleSave = async () => {
+    let allSymptomsBefore = symptomsBefore.concat(
+      othersAuraSymptoms
+        .split(",")
+        .map((item) => item.trim())
+        .filter((s) => s.trim() !== "")
+    );
+
+    let allPostState = postState.concat(
+      othersPostState
+        .split(",")
+        .map((item) => item.trim())
+        .filter((s) => s.trim() !== "")
+    );
     const newCrise = new Crise({
       id: crise?.id || generateId(),
       dateTime,
@@ -150,8 +304,8 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
       type,
       intensity,
       recoverySpeed,
-      symptomsBefore,
-      postState,
+      symptomsBefore: allSymptomsBefore,
+      postState: allPostState,
       tookMedication,
       whatWasDoing,
       menstruationOrPregnancy,
@@ -194,6 +348,7 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
               value={dateTime}
               mode="datetime"
               display="default"
+              maximumDate={new Date()} // Restrict future dates
               onChange={(event, selectedDate) => {
                 setShowDatePicker(false);
                 if (selectedDate) setDateTime(selectedDate);
@@ -220,12 +375,26 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
       <Card style={styles.card}>
         <Card.Title title="Tipo de Crise" />
         <Card.Content>
-          <RadioButton.Group onValueChange={setType} value={type}>
+          <RadioButton.Group
+            onValueChange={handleOthersTypeOfCrisis}
+            value={type}
+          >
             <RadioButton.Item label="Desmaio" value="Desmaio" />
             <RadioButton.Item label="Ausência" value="Ausência" />
             <RadioButton.Item label="Convulsão" value="Convulsão" />
             <RadioButton.Item label="Não sei" value="Não sei" />
-            <RadioButton.Item label="Outras" value="Outras" />
+            {!othersTypeOfCrisis && (
+              <RadioButton.Item label="Outras" value="Outras" />
+            )}
+            {othersTypeOfCrisis && (
+              <TextInput
+                label="Tipo de crise"
+                value={type}
+                onChangeText={setType}
+                mode="outlined"
+                style={styles.input}
+              />
+            )}
           </RadioButton.Group>
         </Card.Content>
       </Card>
@@ -259,19 +428,9 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
 
       {/* Symptoms Before Crisis */}
       <Card style={styles.card}>
-        <Card.Title title="Sintomas Antes da Crise" />
+        <Card.Title title="Sintomas Antes da Crise? (Aura)" />
         <Card.Content>
-          {[
-            "Nenhum",
-            "Sintomas Gástricos",
-            "Ansiedade/Palpitações",
-            "Palidez e suor frio",
-            "Alterações de visão",
-            "Dormência no corpo",
-            "Zumbidos ou outros ruidos",
-            "Tontura",
-            "Outros",
-          ].map((symptom) => (
+          {getAuraSymptoms().map((symptom) => (
             <Checkbox.Item
               key={symptom}
               label={symptom}
@@ -287,6 +446,13 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
               }
             />
           ))}
+          <TextInput
+            label="Outros"
+            value={othersAuraSymptoms}
+            onChangeText={setOthersAuraSymptoms}
+            mode="outlined"
+            style={styles.input}
+          />
         </Card.Content>
       </Card>
 
@@ -294,18 +460,27 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
       <Card style={styles.card}>
         <Card.Title title="Estado após a Crise" />
         <Card.Content>
-          <RadioButton.Group onValueChange={setPostState} value={postState}>
-            <RadioButton.Item label="Sonolência" value="Sonolência" />
-            <RadioButton.Item label="Confusão Mental" value="Confusão Mental" />
-            <RadioButton.Item label="Cefaleia" value="Cefaleia" />
-            <RadioButton.Item
-              label="Náuseas e vômitos"
-              value="Náuseas e vômitos"
+          {getSymptomsAfter().map((symptom) => (
+            <Checkbox.Item
+              key={symptom}
+              label={symptom}
+              status={postState.includes(symptom) ? "checked" : "unchecked"}
+              onPress={() =>
+                setPostState((prev) =>
+                  prev.includes(symptom)
+                    ? prev.filter((s) => s !== symptom)
+                    : [...prev, symptom]
+                )
+              }
             />
-            <RadioButton.Item label="Tontura" value="Tontura" />
-            <RadioButton.Item label="Normal" value="Normal" />
-            <RadioButton.Item label="Outros" value="Outros" />
-          </RadioButton.Group>
+          ))}
+          <TextInput
+            label="Outras"
+            value={othersPostState}
+            onChangeText={setOthersPostState}
+            mode="outlined"
+            style={styles.input}
+          />
         </Card.Content>
       </Card>
 
@@ -318,7 +493,7 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
         <Card.Content>
           <RadioButton.Group
             onValueChange={handleSetTookMedication}
-            value={tookMedication?.toString().orDefault("null")!!}
+            value={tookMedication?.toString() || "null"}
           >
             <RadioButton.Item label="Sim" value="true" />
             <RadioButton.Item label="Não" value="false" />
@@ -335,7 +510,7 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
         />
         <Card.Content>
           <RadioButton.Group
-            onValueChange={setWhatWasDoing}
+            onValueChange={handleSetWhatWasDoing}
             value={whatWasDoing}
           >
             <RadioButton.Item label="Estudando" value="Estudando" />
@@ -349,7 +524,18 @@ const CriseFormScreen: React.FC<CriseFormScreenProps> = ({ crise }) => {
             />
             <RadioButton.Item label="Dormindo" value="Dormindo" />
             <RadioButton.Item label="Após acordar" value="Após acordar" />
-            <RadioButton.Item label="Outro" value="Outro" />
+            {!doingSomethingDifferent && (
+              <RadioButton.Item label="Outro" value="Outro" />
+            )}
+            {doingSomethingDifferent && (
+              <TextInput
+                label="Outro"
+                value={whatWasDoing}
+                onChangeText={setWhatWasDoing}
+                mode="outlined"
+                style={styles.input}
+              />
+            )}
           </RadioButton.Group>
         </Card.Content>
       </Card>
@@ -557,3 +743,40 @@ const styles = StyleSheet.create({
 });
 
 export default CriseFormScreen;
+function getWasDoingTypes() {
+  return [
+    "Estudando",
+    "Assistindo TV ou ao Celular",
+    "Atividade Física",
+    "Dormindo",
+    "Após acordar",
+  ];
+}
+
+function getCrisisTypes() {
+  return ["Desmaio", "Ausência", "Convulsão", "Não sei"];
+}
+
+function getAuraSymptoms() {
+  return [
+    "Nenhum",
+    "Sintomas Gástricos",
+    "Ansiedade/Palpitações",
+    "Palidez e suor frio",
+    "Alterações de visão",
+    "Dormência no corpo",
+    "Zumbidos ou outros ruidos",
+    "Tontura",
+  ];
+}
+
+function getSymptomsAfter() {
+  return [
+    "Sonolência",
+    "Confusão Mental",
+    "Cefaleia",
+    "Náuseas e vômitos",
+    "Tontura",
+    "Normal",
+  ];
+}
