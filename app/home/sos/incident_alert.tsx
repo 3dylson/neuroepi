@@ -53,6 +53,7 @@ const IncidentAlertScreen: React.FC = () => {
 
   // Load emergency contact on component mount
   useEffect(() => {
+    getCurrentLocation(); // Get the location before sending the message
     loadUserEmergencyContact();
   }, []);
 
@@ -103,12 +104,7 @@ const IncidentAlertScreen: React.FC = () => {
       });
     };
 
-    // Send WhatsApp on Android, otherwise send SMS
-    if (Platform.OS === "android") {
-      sendWhatsApp();
-    } else {
-      sendSMS();
-    }
+    sendWhatsApp();
   };
 
   // Start the interval once when the component mounts
@@ -129,7 +125,7 @@ const IncidentAlertScreen: React.FC = () => {
   const colorBottom = BOTTOM_COLORS_SPECTRUM[bottomIndex];
 
   const openEmergencySheet = () => {
-    //navigation.navigate("EmergencySheetScreen");
+    Alert.alert("Ficha de Emergência - Em Desenvolvimento");
   };
 
   return (
@@ -155,7 +151,6 @@ const IncidentAlertScreen: React.FC = () => {
       <TouchableOpacity
         style={styles.sendButton}
         onPress={() => {
-          getCurrentLocation(); // Get the location before sending the message
           sendEmergencyMessage(); // Then send the message with location
         }}
       >

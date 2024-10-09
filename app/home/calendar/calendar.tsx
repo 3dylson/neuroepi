@@ -10,6 +10,7 @@ import calendarIDs from "./calendarIDs";
 import { DoseFrequency } from "@/constants/DoseFrequency";
 import { User } from "@/app/model/User";
 import { Medicine } from "@/app/model/Medicine";
+import { Crise } from "@/app/model/Crise"; // Import Crise
 
 interface State {
   items?: AgendaSchedule;
@@ -21,20 +22,29 @@ export default class CalendarScreen extends Component<State> {
   };
 
   componentDidMount() {
-    this.loadUserMedicines();
+    this.loadUserMedicinesAndCrises();
   }
 
-  // Fetch User's Medicines and Load them into the Calendar
-  loadUserMedicines = async () => {
-    const user = await User.getFromLocal(); // Fetch user data from secure storage
+  // Load both Medicines and Crises into the Calendar
+  loadUserMedicinesAndCrises = async () => {
+    const user = await User.getFromLocal(); // Fetch user data
+    const crises = await Crise.getCrises(); // Fetch crises data
+
     if (user && user.medicines) {
       const items = this.state.items || {};
       const today = new Date(); // Get today's date
 
-      // Generate medicine events based on frequency and times
+      // Add medicines to the calendar
       user.medicines.forEach((medicine) => {
         this.addMedicineToCalendar(items, medicine, today);
       });
+
+      // Add crises to the calendar
+      if (crises) {
+        crises.forEach((crise) => {
+          this.addCriseToCalendar(items, crise);
+        });
+      }
 
       this.setState({ items });
     } else {
@@ -48,22 +58,18 @@ export default class CalendarScreen extends Component<State> {
     medicine: Medicine,
     startDate: Date
   ) => {
-    // Logic to add medicine entries based on frequency
     const { frequency, times } = medicine;
-    let currentDate = new Date(startDate); // Start from today
+    let currentDate = new Date(startDate);
+    const daysToGenerate = 30; // Number of days to generate
 
-    // Adjust number of days based on frequency (for this example, we'll do it for 30 days)
-    const daysToGenerate = 30;
     for (let i = 0; i < daysToGenerate; i++) {
       const strTime = this.timeToString(currentDate.getTime());
 
-      // Check if the medicine should be added for this date based on the frequency
       if (this.isMedicineDueOnDate(medicine, currentDate)) {
         if (!items[strTime]) {
           items[strTime] = [];
         }
 
-        // Add medicine entry to the calendar for each time
         times.forEach((time) => {
           items[strTime].push({
             name: `${medicine.name} (${time}) - ${medicine.dose} ${medicine.doseUnit}`,
@@ -73,22 +79,37 @@ export default class CalendarScreen extends Component<State> {
         });
       }
 
-      // Move to the next day
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
     }
+  };
+
+  // Add crises to the calendar
+  addCriseToCalendar = (items: AgendaSchedule, crise: Crise) => {
+    const strTime = this.timeToString(new Date(crise.dateTime!).getTime());
+
+    if (!items[strTime]) {
+      items[strTime] = [];
+    }
+
+    items[strTime].push({
+      name: `Crise - ${crise.type || "Desconhecido"} (${
+        crise.intensity || "N/A"
+      })`,
+      height: 60,
+      day: strTime,
+    });
   };
 
   // Check if the medicine is due on the given date based on frequency
   isMedicineDueOnDate = (medicine: Medicine, date: Date): boolean => {
-    const dayOfWeek = date.getDay(); // Sunday = 0, Monday = 1, ...
+    const dayOfWeek = date.getDay();
     switch (medicine.frequency) {
       case DoseFrequency.DAILY:
         return true; // Show every day
       case DoseFrequency.WEEKLY:
-        return dayOfWeek === 0; // For example, every Sunday
+        return dayOfWeek === 0; // Every Sunday, for example
       case DoseFrequency.MONTHLY:
-        return date.getDate() === 1; // For example, first day of the month
-      // Add more cases based on your DoseFrequency enum
+        return date.getDate() === 1; // First day of the month
       default:
         return false;
     }
@@ -110,7 +131,7 @@ export default class CalendarScreen extends Component<State> {
   }
 
   loadItems = (day: DateData) => {
-    // You can keep this logic to handle loading more items if needed
+    // Logic to load items (if needed for other months)
   };
 
   renderItem = (reservation: AgendaEntry, isFirst: boolean) => {
@@ -142,7 +163,11 @@ export default class CalendarScreen extends Component<State> {
 
   timeToString(time: number) {
     const date = new Date(time);
-    return date.toISOString().split("T")[0];
+    // Convert to YYYY-MM-DD format
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Ensure month is 2 digits
+    const day = date.getDate().toString().padStart(2, "0"); // Ensure day is 2 digits
+    return `${year}-${month}-${day}`;
   }
 }
 
