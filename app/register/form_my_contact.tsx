@@ -6,12 +6,14 @@ import { TextInputMask } from "react-native-masked-text";
 import { FormStyles } from "./styles/FormStyle";
 import { User } from "../model/User";
 import { EmailRegex, PhoneRegex } from "../utils/StringUtils";
+import PhoneInput from "@/components/PhoneInput";
 
 export default function FormMyContact() {
   const [phone, setPhone] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [phoneError, setPhoneError] = useState<string>("");
   const [emailError, setEmailError] = useState<string>("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState<string>("+351");
 
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
@@ -20,6 +22,8 @@ export default function FormMyContact() {
     const loadUserData = async () => {
       const savedUser = await User.getFromLocal(); // Fetch saved user
       if (savedUser?.phoneNumber) {
+        let countryCode = savedUser.phoneCountryCode || "+351";
+        setPhoneCountryCode(countryCode);
         setPhone(savedUser.phoneNumber); // Populate phone if available
       }
       if (savedUser?.email) {
@@ -59,6 +63,10 @@ export default function FormMyContact() {
     validatePhone(text);
   };
 
+  const handleCountryCodeChange = (code: string) => {
+    setPhoneCountryCode(code);
+  };
+
   const handleEmailChange = (text: string) => {
     setEmail(text);
     validateEmail(text);
@@ -80,7 +88,11 @@ export default function FormMyContact() {
     if (!user) {
       user = new User({ phoneNumber: phone, email });
     } else {
-      await user.updateUserData({ phoneNumber: phone, email });
+      await user.updateUserData({
+        phoneNumber: phone,
+        email,
+        phoneCountryCode,
+      });
     }
 
     router.push("/register/form_emergency_contact"); // Navigate to the next screen
@@ -95,14 +107,14 @@ export default function FormMyContact() {
         <Text style={FormStyles.subtitle}>
           Insira o telefone e o e-mail onde você pode ser contatado.
         </Text>
-        <TextInput
+        <PhoneInput
           mode="outlined"
           label="Telefone"
-          keyboardType="phone-pad"
           value={phone}
-          onChangeText={handlePhoneChange}
+          onChangePhone={handlePhoneChange}
+          onChangeCountryCode={handleCountryCodeChange}
           style={FormStyles.input}
-          error={!!phoneError} // Display error state if phone is invalid
+          errorMessage={phoneError} // Display error state if phone is invalid
         />
         {phoneError ? (
           <Text style={{ color: "red", marginBottom: 16 }}>{phoneError}</Text>

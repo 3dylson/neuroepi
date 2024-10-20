@@ -11,6 +11,7 @@ export class User {
   birthDate?: Date;
   gender?: Gender;
   phoneNumber?: string;
+  phoneCountryCode?: string;
   email?: string;
   emergencyContact?: string;
   emergencyContact2?: string;

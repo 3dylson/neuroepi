@@ -1,7 +1,15 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ViewStyle,
+  Platform,
+  TouchableOpacity,
+  Text,
+} from "react-native";
 import { TextInput, HelperText } from "react-native-paper";
 import { Picker } from "@react-native-picker/picker";
+import { ActionSheetIOS } from "react-native";
 
 interface CountryCode {
   code: string;
@@ -13,6 +21,9 @@ interface PhoneInputProps {
   onChangePhone: (phone: string) => void;
   onChangeCountryCode: (code: string) => void;
   errorMessage?: string;
+  mode?: "flat" | "outlined";
+  label?: string;
+  style?: ViewStyle;
 }
 
 const countryCodes: CountryCode[] = [
@@ -28,6 +39,9 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   onChangePhone,
   onChangeCountryCode,
   errorMessage,
+  mode = "flat",
+  label = "Phone Number",
+  style,
 }) => {
   const [selectedCode, setSelectedCode] = useState<string>(
     countryCodes[0].code
@@ -42,29 +56,59 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     onChangeCountryCode(code);
   };
 
+  // Handle iOS ActionSheet for country code selection
+  const showCountryCodePickerIOS = () => {
+    const options = countryCodes.map((country) => country.label);
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [...options, "Cancel"],
+        cancelButtonIndex: options.length,
+      },
+      (buttonIndex) => {
+        if (buttonIndex < options.length) {
+          const selectedCountry = countryCodes[buttonIndex];
+          handleCodeChange(selectedCountry.code);
+        }
+      }
+    );
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.row}>
-        <Picker
-          selectedValue={selectedCode}
-          style={styles.picker}
-          onValueChange={handleCodeChange}
-        >
-          {countryCodes.map((country) => (
-            <Picker.Item
-              key={country.code}
-              label={country.label}
-              value={country.code}
-            />
-          ))}
-        </Picker>
+        {Platform.OS === "ios" ? (
+          <TouchableOpacity
+            style={styles.pickerIOS}
+            onPress={showCountryCodePickerIOS}
+          >
+            <Text style={styles.pickerIOSText}>{selectedCode}</Text>
+          </TouchableOpacity>
+        ) : (
+          <Picker
+            selectedValue={selectedCode}
+            style={styles.picker}
+            onValueChange={handleCodeChange}
+          >
+            {countryCodes.map((country) => (
+              <Picker.Item
+                key={country.code}
+                label={country.label}
+                value={country.code}
+              />
+            ))}
+          </Picker>
+        )}
+
         <TextInput
-          label="Phone Number"
+          label={label}
           value={value}
           onChangeText={handlePhoneChange}
           style={styles.phoneInput}
           keyboardType="phone-pad"
           error={!!errorMessage}
+          mode={mode}
+          autoComplete="tel"
+          returnKeyType="done"
         />
       </View>
       {errorMessage && <HelperText type="error">{errorMessage}</HelperText>}
@@ -74,14 +118,28 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 8,
+    marginVertical: 12,
+    paddingHorizontal: 10,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   picker: {
     width: 120,
+    paddingVertical: 0,
+    paddingHorizontal: 10,
+  },
+  pickerIOS: {
+    borderWidth: 1,
+    borderRadius: 4,
+    borderColor: "#ccc",
+    padding: 10,
+    justifyContent: "center",
+  },
+  pickerIOSText: {
+    fontSize: 16,
   },
   phoneInput: {
     flex: 1,
