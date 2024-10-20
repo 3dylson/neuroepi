@@ -19,6 +19,7 @@
     "@gorhom/bottom-sheet": "^4.6.4",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.0.1",
+    "@react-native-picker/picker": "^2.8.1",
     "@react-navigation/native": "^6.0.2",
     "chroma-js": "^3.1.1",
     "date-fns": "^4.1.0",

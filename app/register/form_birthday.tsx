@@ -50,7 +50,7 @@ export default function FormBirthday() {
     <View style={FormStyles.container}>
       <View style={FormStyles.content}>
         <Text variant="headlineSmall" style={FormStyles.title}>
-          Qual é seu aniversário?
+          Qual é a sua data de nascimento?
         </Text>
         <Text style={FormStyles.subtitle}>Escolha sua data de nascimento.</Text>
         {Platform.OS === "ios" ? (
