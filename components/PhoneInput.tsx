@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -24,14 +24,12 @@ interface PhoneInputProps {
   mode?: "flat" | "outlined";
   label?: string;
   style?: ViewStyle;
+  defaultCountryCode?: string; // New prop for passing the default country code
 }
 
-const countryCodes: CountryCode[] = [
-  { code: "+1", label: "United States (+1)" },
-  { code: "+44", label: "United Kingdom (+44)" },
-  { code: "+91", label: "India (+91)" },
-  { code: "+61", label: "Australia (+61)" },
-  // Add more country codes as needed
+const fallbackCountryCodes: CountryCode[] = [
+  { code: "+55", label: "Brazil (+55)" },
+  { code: "+351", label: "Portugal (+351)" },
 ];
 
 const PhoneInput: React.FC<PhoneInputProps> = ({
@@ -42,10 +40,65 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   mode = "flat",
   label = "Phone Number",
   style,
+  defaultCountryCode, // Add defaultCountryCode prop here
 }) => {
+  const [countryCodes, setCountryCodes] =
+    useState<CountryCode[]>(fallbackCountryCodes);
   const [selectedCode, setSelectedCode] = useState<string>(
-    countryCodes[0].code
+    defaultCountryCode || "+  "
   );
+
+  // Fetch country codes from API
+  useEffect(() => {
+    const fetchCountryCodes = async () => {
+      try {
+        const response = await fetch("https://restcountries.com/v3.1/all");
+        const data = await response.json();
+
+        // Extract country names and calling codes
+        const fetchedCountryCodes = data
+          .map((country: any) => ({
+            code: country.idd?.root + (country.idd?.suffixes?.[0] || ""),
+            label: `${country.name.common} (${country.idd?.root}${
+              country.idd?.suffixes?.[0] || ""
+            })`,
+          }))
+          .filter((country: any) => country.code) // Ensure that the country has a valid code
+          .sort((a: CountryCode, b: CountryCode) =>
+            a.label.localeCompare(b.label)
+          ); // Sort by country name
+
+        // Prepend Brazil and Portugal to the sorted list
+        const finalCountryCodes = [
+          ...fallbackCountryCodes,
+          ...fetchedCountryCodes,
+        ];
+
+        setCountryCodes(finalCountryCodes);
+
+        // Set default country code from props if it exists
+        if (defaultCountryCode) {
+          const country = finalCountryCodes.find(
+            (c) => c.code === defaultCountryCode
+          );
+          if (country) {
+            setSelectedCode(defaultCountryCode);
+          } else {
+            setSelectedCode(finalCountryCodes[0].code);
+          }
+        } else {
+          setSelectedCode(finalCountryCodes[0].code); // Set first country as default
+        }
+      } catch (error) {
+        // On failure, fallback to Brazil and Portugal
+        console.error("Failed to fetch country codes, using fallback.");
+        setCountryCodes(fallbackCountryCodes);
+        setSelectedCode(defaultCountryCode || fallbackCountryCodes[0].code);
+      }
+    };
+
+    fetchCountryCodes();
+  }, [defaultCountryCode]);
 
   const handlePhoneChange = (text: string) => {
     onChangePhone(text);

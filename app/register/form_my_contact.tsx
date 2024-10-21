@@ -2,18 +2,16 @@ import React, { useState, useEffect } from "react";
 import { View } from "react-native";
 import { TextInput, FAB, Text } from "react-native-paper";
 import { router } from "expo-router";
-import { TextInputMask } from "react-native-masked-text";
 import { FormStyles } from "./styles/FormStyle";
 import { User } from "../model/User";
 import { EmailRegex, PhoneRegex } from "../utils/StringUtils";
-import PhoneInput from "@/components/PhoneInput";
 
 export default function FormMyContact() {
   const [phone, setPhone] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [phoneError, setPhoneError] = useState<string>("");
   const [emailError, setEmailError] = useState<string>("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState<string>("+351");
+  const [phoneCountryCode, setPhoneCountryCode] = useState<string>("");
 
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
@@ -22,7 +20,8 @@ export default function FormMyContact() {
     const loadUserData = async () => {
       const savedUser = await User.getFromLocal(); // Fetch saved user
       if (savedUser?.phoneNumber) {
-        let countryCode = savedUser.phoneCountryCode || "+351";
+        let countryCode = savedUser.phoneCountryCode || "";
+        console.log("Country code: ", countryCode);
         setPhoneCountryCode(countryCode);
         setPhone(savedUser.phoneNumber); // Populate phone if available
       }
@@ -107,14 +106,13 @@ export default function FormMyContact() {
         <Text style={FormStyles.subtitle}>
           Insira o telefone e o e-mail onde você pode ser contatado.
         </Text>
-        <PhoneInput
+        <TextInput
           mode="outlined"
           label="Telefone"
           value={phone}
-          onChangePhone={handlePhoneChange}
-          onChangeCountryCode={handleCountryCodeChange}
+          onChangeText={handlePhoneChange}
           style={FormStyles.input}
-          errorMessage={phoneError} // Display error state if phone is invalid
+          error={!!phoneError} // Display error state if phone is invalid
         />
         {phoneError ? (
           <Text style={{ color: "red", marginBottom: 16 }}>{phoneError}</Text>
