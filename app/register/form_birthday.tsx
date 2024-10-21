@@ -63,7 +63,7 @@ export default function FormBirthday() {
           <TouchableOpacity onPress={handleTextInputClick}>
             <TextInput
               mode="outlined"
-              label="Aniversário"
+              label="Nascimento"
               editable={false}
               style={FormStyles.input}
               value={birthday.toLocaleDateString("pt-BR")}

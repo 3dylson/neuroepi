@@ -1,6 +1,13 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
-import { Text, TextInput, Button, IconButton, Chip } from "react-native-paper";
+import { View, StyleSheet, ScrollView } from "react-native";
+import {
+  Text,
+  TextInput,
+  Button,
+  IconButton,
+  RadioButton,
+  Switch,
+} from "react-native-paper";
 import { CustomButton } from "@/components/CustomButton";
 import { DoseUnitEnum } from "@/constants/DoseUnitEnum";
 import DropDownInput from "@/components/DropDownInput";
@@ -12,45 +19,26 @@ import { Medicine } from "../model/Medicine";
 interface BottomSheetAddMedicineScreenProps {
   onClose: () => void;
   onSave: (newMedicine: Medicine) => void;
-  medicine?: Medicine; // Optional prop to pass a medicine
-}
-
-enum ChipType {
-  Epilepsy = "epilepsy",
-  Other = "other",
+  medicine?: Medicine;
 }
 
 const BottomSheetAddMedicineScreen: React.FC<
   BottomSheetAddMedicineScreenProps
-> = ({
-  onClose,
-  onSave,
-  medicine, // Destructure the medicine prop
-}) => {
-  // Pre-fill formState based on passed medicine or start with empty values
+> = ({ onClose, onSave, medicine }) => {
   const [formState, setFormState] = useState({
     name: medicine?.name || "",
     dose: medicine?.dose || "",
     doseUnit: medicine?.doseUnit || DoseUnitEnum.MG,
-    frequency: medicine?.frequency || null,
+    frequency: medicine?.frequency || DoseFrequency.DAILY,
     notes: medicine?.notes || "",
     relatedMedication: medicine?.relatedMedication || "",
-    epilepsyChipSelected: medicine?.isForEpilepsy ?? true,
-    otherChipSelected: !(medicine?.isForEpilepsy ?? true),
+    isForEpilepsy: medicine?.isForEpilepsy ?? true,
     setAlarm: medicine?.isAlarmSet || false,
   });
 
   // Pre-fill the timeList with medicine times or initialize with one empty time input
   const [timeList, setTimeList] = useState<string[]>(medicine?.times || [""]);
   const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState(false);
-
-  const handleChipPress = (chip: ChipType) => {
-    setFormState((prev) => ({
-      ...prev,
-      epilepsyChipSelected: chip === ChipType.Epilepsy,
-      otherChipSelected: chip === ChipType.Other,
-    }));
-  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
@@ -84,11 +72,11 @@ const BottomSheetAddMedicineScreen: React.FC<
       formState.name,
       formState.dose,
       formState.doseUnit,
-      formState.frequency ?? DoseFrequency.OTHER, // Provide a default value if frequency is null
+      formState.frequency ?? DoseFrequency.DAILY,
       timeList.filter((time) => time !== ""),
       formState.notes,
       formState.relatedMedication,
-      formState.epilepsyChipSelected,
+      formState.isForEpilepsy,
       formState.setAlarm
     );
 
@@ -165,7 +153,7 @@ const BottomSheetAddMedicineScreen: React.FC<
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <IconButton icon="close" onPress={onClose} />
         <Text variant="titleLarge" style={styles.headerTitle}>
@@ -183,24 +171,20 @@ const BottomSheetAddMedicineScreen: React.FC<
         style={styles.input}
       />
 
-      <View style={styles.chipGroup}>
-        <Chip
-          selected={formState.epilepsyChipSelected}
-          style={styles.chip}
-          onPress={() => handleChipPress(ChipType.Epilepsy)}
-        >
-          Epilepsia
-        </Chip>
-        <Chip
-          selected={formState.otherChipSelected}
-          style={styles.chip}
-          onPress={() => handleChipPress(ChipType.Other)}
-        >
-          Outro
-        </Chip>
-      </View>
+      <Text style={styles.label}>Este medicamento é para:</Text>
+      <RadioButton.Group
+        onValueChange={(value) =>
+          handleInputChange("isForEpilepsy", value === "epilepsy")
+        }
+        value={formState.isForEpilepsy ? "epilepsy" : "other"}
+      >
+        <View style={styles.radioGroup}>
+          <RadioButton.Item label="Epilepsia" value="epilepsy" />
+          <RadioButton.Item label="Outra condição" value="other" />
+        </View>
+      </RadioButton.Group>
 
-      {formState.otherChipSelected && (
+      {formState.isForEpilepsy === false && (
         <TextInput
           label="Este medicamento está relacionado com"
           value={formState.relatedMedication}
@@ -230,6 +214,18 @@ const BottomSheetAddMedicineScreen: React.FC<
           renderPopoverContent={renderDoseUnitPopoverContent}
         />
       </View>
+
+      <DropDownInput
+        label="Frequência"
+        text={formState.frequency?.toString() ?? ""}
+        textInputProps={{
+          editable: false,
+          mode: "outlined",
+          style: [styles.input, { flex: 1, marginTop: 16 }],
+          left: <TextInput.Icon icon="repeat" />,
+        }}
+        renderPopoverContent={renderFrequencyPopoverContent}
+      />
 
       <Text style={styles.label}>Horários</Text>
       {timeList.map((time, index) => (
@@ -285,25 +281,13 @@ const BottomSheetAddMedicineScreen: React.FC<
         </CustomButton>
       )}
 
-      <DropDownInput
-        label="Frequência"
-        text={formState.frequency?.toString() ?? ""}
-        textInputProps={{
-          editable: false,
-          mode: "outlined",
-          style: [styles.input, { flex: 1, marginTop: 16 }],
-          left: <TextInput.Icon icon="repeat" />,
-        }}
-        renderPopoverContent={renderFrequencyPopoverContent}
-      />
-
-      <Chip
-        selected={formState.setAlarm}
-        style={styles.alarmChip}
-        onPress={() => handleInputChange("setAlarm", !formState.setAlarm)}
-      >
-        Adicionar Alarme
-      </Chip>
+      <View style={styles.switchContainer}>
+        <Text>Adicionar Alarme</Text>
+        <Switch
+          value={formState.setAlarm}
+          onValueChange={(value) => handleInputChange("setAlarm", value)}
+        />
+      </View>
 
       <Text style={styles.label}>Notas</Text>
       <TextInput
@@ -321,13 +305,12 @@ const BottomSheetAddMedicineScreen: React.FC<
       >
         Guardar
       </CustomButton>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 8,
   },
   label: {
@@ -338,7 +321,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 34,
+    marginBottom: 24,
+  },
+  switchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
   headerTitle: {
     flex: 1,
@@ -347,16 +336,14 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 16,
   },
-  chipGroup: {
+  radioGroup: {
     flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: 16,
-  },
-  chip: {
-    marginRight: 8,
   },
   rowDose: {
     flexDirection: "row",
-    marginBottom: 34,
+    marginBottom: 24,
   },
   doseInput: {
     flex: 1,
@@ -372,11 +359,6 @@ const styles = StyleSheet.create({
   timeInput: {
     flex: 1,
     marginRight: 8,
-  },
-  alarmChip: {
-    marginBottom: 32,
-    width: "auto",
-    alignSelf: "flex-start",
   },
   notesInput: {
     height: 80,

@@ -4,6 +4,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Text, IconButton, Card } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native"; // Assuming you're using React Navigation
 import { Colors } from "@/constants/Colors";
+import { router } from "expo-router";
 
 export default function ProfileScreen() {
   const [firstName, setFirstName] = useState<string>("");
@@ -54,7 +55,13 @@ export default function ProfileScreen() {
           <Card style={styles.card}>
             <View style={styles.cardContent}>
               <Text style={styles.cardText}>Minhas Informações</Text>
-              <IconButton icon="chevron-right" size={24} onPress={() => {}} />
+              <IconButton
+                icon="chevron-right"
+                size={24}
+                onPress={() => {
+                  router.push("/register/form_name");
+                }}
+              />
             </View>
           </Card>
         </TouchableOpacity>

@@ -32,7 +32,7 @@ const DropDownInput: React.FC<DropDownInputProps> = ({
   textInputProps = {},
   renderPopoverContent = null,
   onItemSelect,
-  popoverPlacement = Placement.BOTTOM,
+  popoverPlacement = Placement.AUTO,
   containerStyle,
   customAction = () => {},
 }) => {
