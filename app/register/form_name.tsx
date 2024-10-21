@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
-import { TextInput, FAB, Text } from "react-native-paper";
-import { router } from "expo-router";
+import { TextInput, FAB, Text, Button } from "react-native-paper";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { FormStyles } from "./styles/FormStyle";
 import { User } from "../model/User";
 
 export default function FormName() {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
+  const params = useLocalSearchParams(); // Get the params from router
+  const navigation = useNavigation();
+
+  // useEffect(() => {
+  //   if (params.id) {
+  //     navigation.setOptions({
+  //       headerRight: () => (
+  //         <Button onPress={() => router.navigate("/home/profile/profile")}>
+  //           Sair
+  //         </Button>
+  //       ),
+  //     });
+  //   }
+  // }, [params.id, navigation]);
 
   useEffect(() => {
     // Function to load the user data if it exists

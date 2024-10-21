@@ -42,19 +42,28 @@ export default function ProfileScreen() {
 
       {/* Group 1: Registered Crisis and Patient Information */}
       <View style={styles.cardGroup}>
-        <TouchableOpacity onPress={() => {}}>
+        {/* <TouchableOpacity onPress={() => {}}>
           <Card style={styles.card}>
             <View style={styles.cardContent}>
               <Text style={styles.cardText}>Crises Registradas</Text>
               <IconButton icon="chevron-right" size={24} onPress={() => {}} />
             </View>
           </Card>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity
+          onPress={() => {
+            router.push({
+              pathname: "/register/form_name",
+              params: { id: "showSaveAndExit" },
+            });
+          }}
+        >
           <Card style={styles.card}>
             <View style={styles.cardContent}>
-              <Text style={styles.cardText}>Minhas Informações</Text>
+              <Text style={styles.cardText}>
+                Consultar ou Editar Minhas Informações
+              </Text>
               <IconButton
                 icon="chevron-right"
                 size={24}
@@ -84,11 +93,21 @@ export default function ProfileScreen() {
           </Card>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity
+          onPress={() => {
+            router.push("/home/profile/app_config");
+          }}
+        >
           <Card style={styles.card}>
             <View style={styles.cardContent}>
               <Text style={styles.cardText}>Configurações da app</Text>
-              <IconButton icon="cog" size={24} onPress={() => {}} />
+              <IconButton
+                icon="cog"
+                size={24}
+                onPress={() => {
+                  router.push("/home/profile/app_config");
+                }}
+              />
             </View>
           </Card>
         </TouchableOpacity>

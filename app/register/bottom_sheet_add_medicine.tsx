@@ -38,7 +38,9 @@ const BottomSheetAddMedicineScreen: React.FC<
 
   // Pre-fill the timeList with medicine times or initialize with one empty time input
   const [timeList, setTimeList] = useState<string[]>(medicine?.times || [""]);
-  const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState(false);
+  const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState<
+    null | number
+  >(null);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
@@ -243,7 +245,7 @@ const BottomSheetAddMedicineScreen: React.FC<
             })}
             customAction={() => {
               if (isAndroid()) {
-                setRenderAndroidTimePicker(true);
+                setRenderAndroidTimePicker(index);
               }
             }}
           />
@@ -254,18 +256,18 @@ const BottomSheetAddMedicineScreen: React.FC<
             />
           )}
 
-          {renderAndroidTimePicker && (
+          {renderAndroidTimePicker === index && (
             <CustomDateTimePicker
               value={new Date()}
               mode="time"
               onChange={(event, date) => {
                 if (date) {
-                  setRenderAndroidTimePicker(false);
+                  setRenderAndroidTimePicker(null);
                   const timeString = date.toHourMinuteString();
                   handleTimeChange(index, timeString);
                 }
               }}
-              onDismiss={() => setRenderAndroidTimePicker(false)}
+              onDismiss={() => setRenderAndroidTimePicker(null)}
             />
           )}
         </View>

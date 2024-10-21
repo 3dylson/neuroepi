@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, StyleSheet, Alert } from "react-native";
+import { ScrollView, StyleSheet, Alert } from "react-native";
 import {
   Text,
   TextInput,
@@ -15,7 +15,7 @@ import { Crise } from "@/app/model/Crise";
 import { generateId } from "@/app/utils/Utils";
 import { User } from "@/app/model/User";
 import Gender from "@/app/register/utils/GenderEnum";
-import { set } from "lodash";
+// import { set } from "lodash"; // Removed unused import
 
 // TODO: This should be done with Enums or Constants
 const CriseFormScreen: React.FC = () => {
@@ -349,7 +349,7 @@ const CriseFormScreen: React.FC = () => {
               mode="datetime"
               display="default"
               maximumDate={new Date()} // Restrict future dates
-              onChange={(event, selectedDate) => {
+              onChange={(_, selectedDate) => {
                 setShowDatePicker(false);
                 if (selectedDate) setDateTime(selectedDate);
               }}

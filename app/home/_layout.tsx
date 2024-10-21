@@ -16,6 +16,7 @@ export default function HomeLayout() {
       <Stack.Screen name="profile/profile" />
       <Stack.Screen name="crise/crise_form" />
       <Stack.Screen name="crise/crisis_list" />
+      <Stack.Screen name="profile/app_config" />
     </Stack>
   );
 }

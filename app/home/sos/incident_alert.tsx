@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Linking,
   Alert,
   Platform,
 } from "react-native";
@@ -15,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Chroma from "chroma-js";
 import * as Location from "expo-location"; // Use expo-location for location services
 import { User } from "@/app/model/User";
+import * as Linking from "expo-linking";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -51,11 +51,24 @@ const IncidentAlertScreen: React.FC = () => {
     }
   };
 
-  // Load emergency contact on component mount
+  const redirectBackToAppUrl = Linking.createURL("home/sos/incident_alert");
+
+  // Load emergency contact and location on component mount
   useEffect(() => {
-    getCurrentLocation(); // Get the location before sending the message
-    loadUserEmergencyContact();
+    const initialize = async () => {
+      await getCurrentLocation(); // Get the location before sending the message
+      await loadUserEmergencyContact();
+    };
+
+    initialize();
   }, []);
+
+  // Send emergency message when emergency contact and location are retrieved
+  useEffect(() => {
+    if (emergencyContactNumber && location) {
+      sendEmergencyMessage();
+    }
+  }, [emergencyContactNumber, location]);
 
   // Request location permission and retrieve user's current location
   const getCurrentLocation = async () => {
@@ -86,10 +99,15 @@ const IncidentAlertScreen: React.FC = () => {
       return;
     }
 
+    // Deep link and location URL
+    const deepLink = redirectBackToAppUrl;
     const { latitude, longitude } = location;
     const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
-    const message = `Estou a ter uma crise epiléptica. Por favor, ajuda-me. Localização atual: ${locationLink}`;
 
+    // Create the emergency message
+    const message = `Estou a ter uma crise epiléptica. Por favor, ajuda-me.\nLocalização atual: ${locationLink}\nVoltar a neuroepi: ${deepLink}`;
+
+    // Function to send SMS (plain text)
     const sendSMS = () => {
       const smsLink = `sms:${emergencyContactNumber}?body=${message}`;
       Linking.openURL(smsLink).catch(() => {
@@ -97,14 +115,17 @@ const IncidentAlertScreen: React.FC = () => {
       });
     };
 
+    // Function to send WhatsApp (encoded)
     const sendWhatsApp = () => {
-      const whatsappLink = `whatsapp://send?phone=${emergencyContactNumber}&text=${message}`;
+      const whatsappMessage = encodeURIComponent(message);
+      const whatsappLink = `whatsapp://send?phone=${emergencyContactNumber}&text=${whatsappMessage}`;
       Linking.openURL(whatsappLink).catch(() => {
         Alert.alert("WhatsApp não instalado.");
       });
     };
 
-    sendWhatsApp();
+    sendSMS();
+    //sendWhatsApp();
   };
 
   // Start the interval once when the component mounts
@@ -148,14 +169,14 @@ const IncidentAlertScreen: React.FC = () => {
       </PulsatingButton>
 
       {/* Button to trigger emergency message */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.sendButton}
         onPress={() => {
           sendEmergencyMessage(); // Then send the message with location
         }}
       >
         <Text style={styles.sendButtonText}>Enviar mensagem de emergência</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </LinearGradient>
   );
 };

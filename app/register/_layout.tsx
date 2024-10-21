@@ -1,10 +1,23 @@
-import React from "react";
-import { Stack, useRouter } from "expo-router";
-import { IconButton } from "react-native-paper";
+import React, { useEffect } from "react";
+import {
+  Stack,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
+import { Button, IconButton } from "react-native-paper";
 import { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 
 export default function RegisterLayout() {
   const router = useRouter();
+  const params = useLocalSearchParams(); // Get the params from router
+  const [showExitHeader, setShowExitHeader] = React.useState(false);
+
+  useEffect(() => {
+    if (params.id == "showSaveAndExit") {
+      setShowExitHeader(true);
+    }
+  }, [params.id]);
 
   // Function to handle setting parameters
   const handleHelpPress = () => {
@@ -25,6 +38,12 @@ export default function RegisterLayout() {
     <Stack
       screenOptions={{
         headerTitle: "",
+        headerRight: () =>
+          showExitHeader ? (
+            <Button onPress={() => router.navigate("/home/profile/profile")}>
+              Sair
+            </Button>
+          ) : null,
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
