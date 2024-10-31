@@ -9,67 +9,153 @@ import * as FileSystem from "expo-file-system";
 import { Platform } from "react-native";
 
 // Helper function to prepare HTML content for PDF
-// Helper function to prepare HTML content for PDF
 async function generateHTMLContent(): Promise<string> {
   const user = await User.getFromLocal();
   const crises = await Crise.getCrises();
 
-  const userData = user
-    ? `
-      <h1>User Information</h1>
-      <p><strong>Name:</strong> ${user.firstName || ""} ${
-        user.lastName || ""
-      }</p>
-      <p><strong>Email:</strong> ${user.email || ""}</p>
-      <p><strong>Phone:</strong> ${user.phoneNumber || ""}</p>
-      <p><strong>Birth Date:</strong> ${
-        user.birthDate instanceof Date ? user.birthDate.toISOString() : "N/A"
-      }</p>
-      <p><strong>Medicines:</strong> ${
-        user.medicines?.map((m) => m.name).join(", ") || "None"
-      }</p>
-    `
-    : "<p>No user data found</p>";
+  // Calculate age based on birth date
+  const age = user?.birthDate
+    ? new Date().getFullYear() - user.birthDate.getFullYear()
+    : "N/A";
 
-  const crisisData =
-    crises && crises.length > 0
-      ? `
-      <h2>Crises Information</h2>
-      <ul>
-        ${crises
-          .map(
-            (crise) => `
-          <li>
-            <strong>Date:</strong> ${
-              crise.dateTime instanceof Date
-                ? crise.dateTime.toISOString()
-                : "N/A"
-            }<br>
-            <strong>Type:</strong> ${crise.type || "N/A"}<br>
-            <strong>Duration:</strong> ${crise.duration || "N/A"}<br>
-            <strong>Symptoms:</strong> ${
-              crise.symptomsBefore?.join(", ") || "None"
-            }
-          </li>
-        `
-          )
-          .join("")}
-      </ul>
-    `
-      : "<p>No crises data found</p>";
+  // Count occurrences of each symptom and crisis type for summary
+  const symptomCounts: Record<string, number> = {};
+  const crisisTypes: Record<string, number> = {};
+  let totalDuration = 0;
+  crises?.forEach((crise) => {
+    crise.symptomsBefore?.forEach((symptom) => {
+      symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
+    });
+    if (crise.type)
+      crisisTypes[crise.type] = (crisisTypes[crise.type] || 0) + 1;
+    totalDuration += Number(crise.duration) || 0;
+  });
 
+  const avgDuration =
+    crises && crises.length > 0 ? totalDuration / crises.length : 0;
+
+  const formatOccurrencePercentage = (
+    occurrences: Record<string, number>,
+    total: number
+  ) =>
+    Object.entries(occurrences)
+      .map(([key, value]) => `${((value / total) * 100).toFixed(1)}%: ${key}`)
+      .join(", ");
+
+  const mostFrequentSymptoms = formatOccurrencePercentage(
+    symptomCounts,
+    crises?.length || 0
+  );
+  const crisisManifestations = formatOccurrencePercentage(
+    crisisTypes,
+    crises?.length || 0
+  );
+
+  // HTML content with a structured layout in Portuguese
   return `
     <html>
       <head>
         <style>
           body { font-family: Arial, sans-serif; }
-          h1, h2 { color: #333; }
+          h1, h2 { color: #333; text-align: center; }
           p, li { font-size: 14px; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .section { margin: 20px 0; }
+          .section-title { font-weight: bold; font-size: 16px; }
         </style>
       </head>
       <body>
-        ${userData}
-        ${crisisData}
+        <div class="header">
+          <h1>Relatório Médico</h1>
+          <p><strong>Período do Relatório:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+
+        <div class="section">
+          <h2>Informações do Paciente</h2>
+          <p><strong>Nome:</strong> ${user?.firstName || ""} ${
+    user?.lastName || ""
+  }</p>
+          <p><strong>Idade:</strong> ${age}</p>
+          <p><strong>Gênero:</strong> ${user?.gender || "N/A"}</p>
+          <p><strong>Diagnóstico:</strong> ${user?.diagnostic || "N/A"}</p>
+        </div>
+
+        <div class="section">
+          <h2>Informações das Crises</h2>
+          <p><strong>Datas das Crises:</strong></p>
+          <ul>
+            ${
+              crises
+                ?.map(
+                  (crise) => `
+                <li>
+                  <strong>Data:</strong> ${
+                    crise.dateTime
+                      ? new Date(crise.dateTime).toLocaleDateString()
+                      : "N/A"
+                  }
+                  <br><strong>Duração:</strong> ${crise.duration || "N/A"}
+                  <br><strong>Tipo:</strong> ${crise.type || "N/A"}
+                  <br><strong>Sintomas Antes:</strong> ${
+                    crise.symptomsBefore?.join(", ") || "Nenhum"
+                  }
+                  <br><strong>Estado após a crise:</strong> ${
+                    crise.postState?.join(", ") || "N/A"
+                  }
+                </li>
+              `
+                )
+                .join("") || "<p>Nenhuma crise registrada.</p>"
+            }
+          </ul>
+        </div>
+
+        <div class="section">
+          <h2>Resumo das Crises</h2>
+          <p><strong>Duração média das crises:</strong> ${avgDuration.toFixed(
+            2
+          )} minutos</p>
+          <p><strong>Como as crises se manifestaram:</strong> ${
+            crisisManifestations || "N/A"
+          }</p>
+          <p><strong>Intensidade das crises:</strong> ${[
+            ...new Set(crises?.map((c) => c.intensity || "N/A")),
+          ].join(", ")}</p>
+          <p><strong>Tempo de recuperação:</strong> ${[
+            ...new Set(crises?.map((c) => c.recoverySpeed || "N/A")),
+          ].join(", ")}</p>
+          <p><strong>Estado após as crises:</strong> ${[
+            ...new Set(crises?.flatMap((c) => c.postState || ["N/A"])),
+          ].join(", ")}</p>
+          <p><strong>Sintomas de Aura mais registrados:</strong> ${
+            mostFrequentSymptoms || "Nenhum"
+          }</p>
+        </div>
+
+        <div class="section">
+          <h2>Fatores Associados às Crises</h2>
+          <p><strong>Relação das crises com a tomada de medicamentos:</strong> ${
+            crises?.some((c) => c.tookMedication) ? "Sim" : "Não"
+          }</p>
+          <p><strong>Relação com o ciclo menstrual:</strong> ${
+            crises?.some((c) => c.menstruationOrPregnancy) ? "Sim" : "Não"
+          }</p>
+          <p><strong>Fatores associados:</strong> ${
+            [
+              ...new Set(
+                crises?.flatMap((c) => [
+                  c.emotionalStress,
+                  c.sleepStatus,
+                  c.alcohol,
+                  c.substanceUse,
+                  c.selfHarm,
+                ])
+              ),
+            ]
+              .filter((factor) => factor)
+              .join(", ") || "Nenhum fator associado registrado"
+          }</p>
+        </div>
       </body>
     </html>
   `;

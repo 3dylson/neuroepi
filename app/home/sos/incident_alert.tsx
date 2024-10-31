@@ -125,8 +125,8 @@ const IncidentAlertScreen: React.FC = () => {
       });
     };
 
-    sendSMS();
-    //sendWhatsApp();
+    //sendSMS();
+    sendWhatsApp();
   };
 
   // Start the interval once when the component mounts

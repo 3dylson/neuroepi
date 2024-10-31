@@ -5,6 +5,7 @@ import { Text, IconButton, Card } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native"; // Assuming you're using React Navigation
 import { Colors } from "@/constants/Colors";
 import { router } from "expo-router";
+import { generateAndSharePDF } from "@/app/utils/PdfUtils";
 
 export default function ProfileScreen() {
   const [firstName, setFirstName] = useState<string>("");
@@ -80,7 +81,7 @@ export default function ProfileScreen() {
       <View style={styles.cardGroup}>
         <TouchableOpacity
           onPress={() => {
-            /* Implement share functionality */
+            generateAndSharePDF();
           }}
         >
           <Card style={styles.card}>
@@ -88,7 +89,13 @@ export default function ProfileScreen() {
               <Text style={styles.cardText}>
                 Compartilhar meu registro médico
               </Text>
-              <IconButton icon="share" size={24} onPress={() => {}} />
+              <IconButton
+                icon="share"
+                size={24}
+                onPress={() => {
+                  generateAndSharePDF();
+                }}
+              />
             </View>
           </Card>
         </TouchableOpacity>
