@@ -88,7 +88,7 @@ const HomeLayout: React.FC = () => {
           activeOpacity={0.8}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          onLongPress={() => router.push("/home/sos/incident_alert")} // Add your SOS action here
+          onPress={() => router.push("/home/sos/incident_alert")} // Add your SOS action here
           style={styles.sosButtonContainer}
         >
           <LinearGradient
@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
   },
   sosSubText: {
     fontSize: 14,
+    paddingHorizontal: 10, // Padding for better spacing
     color: "#fff", // Matching color for text consistency
   },
 });

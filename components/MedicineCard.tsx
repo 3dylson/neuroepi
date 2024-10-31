@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import {
   Card,
   Title,
@@ -36,6 +43,25 @@ const MedicineCard: React.FC<MedicineCardProps> = ({
     }
   };
 
+  // Function to handle delete button click
+  const handleDeleteClick = () => {
+    Alert.alert(
+      "Excluir Medicamento",
+      `Tem certeza de que deseja excluir ${name}?`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Excluir",
+          onPress: () => onDelete(id),
+          style: "destructive",
+        },
+      ]
+    );
+  };
+
   return (
     <TouchableOpacity onPress={handleCardClick} activeOpacity={0.8}>
       <Card style={[styles.card, { backgroundColor: colors.primaryContainer }]}>
@@ -66,7 +92,7 @@ const MedicineCard: React.FC<MedicineCardProps> = ({
           <IconButton
             icon="delete"
             size={20}
-            onPress={() => onDelete(id)}
+            onPress={handleDeleteClick}
             style={styles.deleteButton}
             iconColor={colors.error}
           />

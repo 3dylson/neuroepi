@@ -15,6 +15,16 @@ import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 import { generateId, isAndroid, isIOS } from "../utils/Utils";
 import { DoseFrequency } from "@/constants/DoseFrequency";
 import { Medicine } from "../model/Medicine";
+import * as Notifications from "expo-notifications";
+import {
+  getDefaultCalendarId,
+  getNextNotificationDates,
+  parseTimeStrings,
+  requestCalendarPermission,
+  requestNotificationPermission,
+} from "../utils/NotifUtils";
+import * as Calendar from "expo-calendar";
+import * as Localization from "expo-localization";
 
 interface BottomSheetAddMedicineScreenProps {
   onClose: () => void;
@@ -46,11 +56,79 @@ const BottomSheetAddMedicineScreen: React.FC<
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleTimeChange = (index: number, value: string) => {
+  const handleAlarmSwitchChange = async (value: boolean) => {
+    const calendarPermissionGranted = await requestCalendarPermission();
+    console.log("Calendar permission granted:", calendarPermissionGranted);
+
+    if (calendarPermissionGranted) {
+      setFormState((prev) => ({ ...prev, setAlarm: value }));
+    } else {
+      setFormState((prev) => ({ ...prev, setAlarm: false }));
+    }
+  };
+
+  const handleTimeChange: (index: number, value: string) => void = (
+    index,
+    value
+  ) => {
     const updatedTimes = [...timeList];
     updatedTimes[index] = value;
+    console.log("Updated times:", updatedTimes);
     setTimeList(updatedTimes);
   };
+
+  async function setNotificationAlarm(newMedicine: Medicine) {
+    if (newMedicine.isAlarmSet) {
+      const calendarPermissionGranted = await requestCalendarPermission();
+
+      if (calendarPermissionGranted) {
+        const notificationDates = getNextNotificationDates(
+          newMedicine.times,
+          newMedicine.frequency
+        );
+
+        notificationDates.forEach(async (notificationDate) => {
+          // Schedule notifications
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: `Hora de tomar seu remédio!`,
+              body: `Não se esqueça de tomar seu remédio: ${newMedicine.name}`,
+              data: { medicineId: newMedicine.id },
+            },
+            trigger: {
+              date: notificationDate,
+            },
+          });
+
+          // Create calendar event
+          const calendarId = await getDefaultCalendarId(); // Get the user's default calendar ID
+
+          if (calendarId) {
+            const deviceTimeZone = Localization.timezone;
+            console.log("Device time zone:", deviceTimeZone);
+            await Calendar.createEventAsync(calendarId, {
+              title: `Tome seu remédio: ${newMedicine.name}`,
+              startDate: notificationDate,
+              endDate: new Date(notificationDate.getTime() + 30 * 60 * 1000), // Assume a 30-minute event
+              timeZone: deviceTimeZone, // Adjust as needed for your time zone
+              notes: newMedicine.notes,
+            });
+
+            console.log(
+              "Calendar event added for medicine:",
+              newMedicine.name,
+              "at",
+              notificationDate
+            );
+          } else {
+            console.log("Default calendar ID not found");
+          }
+        });
+      } else {
+        console.log("Notification or calendar permissions not granted");
+      }
+    }
+  }
 
   const addTimeInput = () => {
     if (timeList[timeList.length - 1] !== "") {
@@ -68,7 +146,7 @@ const BottomSheetAddMedicineScreen: React.FC<
     return timeList[timeList.length - 1] !== "";
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newMedicine: Medicine = new Medicine(
       generateId(),
       formState.name,
@@ -81,6 +159,8 @@ const BottomSheetAddMedicineScreen: React.FC<
       formState.isForEpilepsy,
       formState.setAlarm
     );
+
+    await setNotificationAlarm(newMedicine);
 
     onSave(newMedicine);
   };
@@ -260,6 +340,7 @@ const BottomSheetAddMedicineScreen: React.FC<
             <CustomDateTimePicker
               value={new Date()}
               mode="time"
+              display="spinner"
               onChange={(event, date) => {
                 if (date) {
                   setRenderAndroidTimePicker(null);
@@ -287,7 +368,7 @@ const BottomSheetAddMedicineScreen: React.FC<
         <Text>Adicionar Alarme</Text>
         <Switch
           value={formState.setAlarm}
-          onValueChange={(value) => handleInputChange("setAlarm", value)}
+          onValueChange={(value) => handleAlarmSwitchChange(value)}
         />
       </View>
 

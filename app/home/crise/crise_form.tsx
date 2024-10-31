@@ -8,13 +8,15 @@ import {
   FAB,
   Card,
   IconButton,
+  Button,
 } from "react-native-paper";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Crise } from "@/app/model/Crise";
-import { generateId } from "@/app/utils/Utils";
+import { generateId, isAndroid, isIOS } from "@/app/utils/Utils";
 import { User } from "@/app/model/User";
 import Gender from "@/app/register/utils/GenderEnum";
+import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 // import { set } from "lodash"; // Removed unused import
 
 // TODO: This should be done with Enums or Constants
@@ -337,13 +339,13 @@ const CriseFormScreen: React.FC = () => {
               " - " +
               dateTime.toHourMinuteString()
             } // Format the date/time input
-            onFocus={() => setShowDatePicker(true)}
-            onPress={() => setShowDatePicker(true)}
+            // onFocus={() => setShowDatePicker(true)}
+            // onPress={() => setShowDatePicker(true)}
             mode="outlined"
             editable={false}
             style={styles.input}
           />
-          {showDatePicker && (
+          {isIOS() && (
             <DateTimePicker
               value={dateTime}
               mode="datetime"
@@ -354,6 +356,24 @@ const CriseFormScreen: React.FC = () => {
                 if (selectedDate) setDateTime(selectedDate);
               }}
             />
+          )}
+          {showDatePicker && (
+            <CustomDateTimePicker
+              value={dateTime}
+              mode="time"
+              display="spinner"
+              maximumDate={new Date()} // Restrict future dates
+              onChange={(_, selectedDate) => {
+                setShowDatePicker(false);
+                if (selectedDate) setDateTime(selectedDate);
+              }}
+              onDismiss={() => setShowDatePicker(false)}
+            />
+          )}
+          {isAndroid() && (
+            <Button mode="contained" onPress={() => setShowDatePicker(true)}>
+              Escolher Hora da Crise
+            </Button>
           )}
         </Card.Content>
       </Card>

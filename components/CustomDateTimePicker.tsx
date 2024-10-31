@@ -41,6 +41,7 @@ const CustomDateTimePicker = React.forwardRef<any, CustomDateTimePickerProps>(
       if (Platform.OS === "android") {
         DateTimePickerAndroid.open({
           ...restProps,
+          display: platformDisplay,
           value: restProps.value ?? new Date(),
           onChange: handleChange,
           mode: currentMode,

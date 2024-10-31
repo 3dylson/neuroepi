@@ -15,7 +15,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Este aplicativo precisa acessar sua localização para enviar alertas de emergência."
+        "NSLocationWhenInUseUsageDescription": "Este aplicativo precisa acessar sua localização para enviar alertas de emergência.",
+        "NSCalendarsUsageDescription": "Este aplicativo precisa acessar seu calendário para criar lembretes de medicamentos."
       }
     },
     "android": {
@@ -27,7 +28,10 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "android.permission.READ_CALENDAR",
-        "android.permission.WRITE_CALENDAR"
+        "android.permission.WRITE_CALENDAR",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR",
+        "NOTIFICATIONS"
       ]
     },
     "web": {

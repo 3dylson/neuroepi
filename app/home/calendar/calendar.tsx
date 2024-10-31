@@ -25,6 +25,7 @@ export default class CalendarScreen extends Component<State> {
 
   componentDidMount() {
     this.loadUserMedicinesAndCrises();
+    //this.insertEmptyItems();
   }
 
   // Load both Medicines and Crises into the Calendar
@@ -161,12 +162,38 @@ export default class CalendarScreen extends Component<State> {
         renderEmptyDate={this.renderEmptyDate}
         rowHasChanged={this.rowHasChanged}
         showClosingKnob={true}
+        onDayPress={this.onDayPress}
       />
     );
   }
 
   loadItems = (day: DateData) => {
     // Logic to load items (if needed for other months)
+    // if the day is not in the items, add an empty array
+    // if (!this.state.items?.[day.dateString]) {
+    //   let itemsWithoutEmpty = Object.keys(this.state.items || {}).reduce(
+    //     (acc: any, key: string) => {
+    //       if (this.state.items![key].length > 0) {
+    //         console.log("Adding items for ", key);
+    //         acc[key] = this.state.items![key];
+    //       }
+    //       return acc;
+    //     },
+    //     {}
+    //   );
+    //   this.setState({
+    //     items: {
+    //       ...itemsWithoutEmpty,
+    //       [day.dateString]: [],
+    //     },
+    //   });
+    // } else {
+    //   console.log("Items already exist for ", day.dateString);
+    // }
+  };
+
+  onDayPress = (day: DateData) => {
+    console.log("Selected day: ", day);
   };
 
   renderItem = (reservation: AgendaEntry, isFirst: boolean) => {
@@ -187,7 +214,7 @@ export default class CalendarScreen extends Component<State> {
   renderEmptyDate = () => {
     return (
       <View style={styles.emptyDate}>
-        <Text>This is an empty date!</Text>
+        <Text>Nada Registrado para hoje</Text>
       </View>
     );
   };

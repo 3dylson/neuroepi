@@ -15,6 +15,7 @@ import Chroma from "chroma-js";
 import * as Location from "expo-location"; // Use expo-location for location services
 import { User } from "@/app/model/User";
 import * as Linking from "expo-linking";
+import { generateAndOpenPDF } from "@/app/utils/PdfUtils";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -146,7 +147,7 @@ const IncidentAlertScreen: React.FC = () => {
   const colorBottom = BOTTOM_COLORS_SPECTRUM[bottomIndex];
 
   const openEmergencySheet = () => {
-    Alert.alert("Ficha de Emergência - Em Desenvolvimento");
+    generateAndOpenPDF();
   };
 
   return (
