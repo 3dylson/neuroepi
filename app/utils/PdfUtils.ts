@@ -42,17 +42,23 @@ async function generateHTMLContent(): Promise<string> {
     "Não sei": 0,
   };
 
-  // Count occurrences of each symptom and crisis type for summary
+  // Count occurrences of each symptom, crisis type, and intensity for summary
   const symptomCounts: Record<string, number> = {};
   const crisisTypes: Record<string, number> = {};
+  const intensityCounts: Record<string, number> = {};
   let totalDuration = 0;
   let countedCrises = 0;
+
   crises?.forEach((crise) => {
     crise.symptomsBefore?.forEach((symptom) => {
       symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
     });
     if (crise.type) {
       crisisTypes[crise.type] = (crisisTypes[crise.type] || 0) + 1;
+    }
+    if (crise.intensity) {
+      intensityCounts[crise.intensity] =
+        (intensityCounts[crise.intensity] || 0) + 1;
     }
     const mappedDuration =
       durationMapping[crise.duration as keyof typeof durationMapping];
@@ -64,6 +70,7 @@ async function generateHTMLContent(): Promise<string> {
 
   const avgDuration = countedCrises > 0 ? totalDuration / countedCrises : 0;
 
+  // Helper to format occurrence percentages
   const formatOccurrencePercentage = (
     occurrences: Record<string, number>,
     total: number
@@ -72,12 +79,17 @@ async function generateHTMLContent(): Promise<string> {
       .map(([key, value]) => `${((value / total) * 100).toFixed(1)}%: ${key}`)
       .join(", ");
 
+  // Calculate and format percentages for most frequent symptoms, crisis types, and intensities
   const mostFrequentSymptoms = formatOccurrencePercentage(
     symptomCounts,
     crises?.length || 0
   );
   const crisisManifestations = formatOccurrencePercentage(
     crisisTypes,
+    crises?.length || 0
+  );
+  const intensityDistribution = formatOccurrencePercentage(
+    intensityCounts,
     crises?.length || 0
   );
 
@@ -148,9 +160,9 @@ async function generateHTMLContent(): Promise<string> {
           <p><strong>Como as crises se manifestaram:</strong> ${
             crisisManifestations || "N/A"
           }</p>
-          <p><strong>Intensidade das crises:</strong> ${[
-            ...new Set(crises?.map((c) => c.intensity || "N/A")),
-          ].join(", ")}</p>
+          <p><strong>Intensidade das crises:</strong> ${
+            intensityDistribution || "N/A"
+          }</p>
           <p><strong>Tempo de recuperação:</strong> ${[
             ...new Set(crises?.map((c) => c.recoverySpeed || "N/A")),
           ].join(", ")}</p>
