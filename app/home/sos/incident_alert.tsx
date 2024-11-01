@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  SafeAreaView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -16,6 +17,8 @@ import * as Location from "expo-location"; // Use expo-location for location ser
 import { User } from "@/app/model/User";
 import * as Linking from "expo-linking";
 import { generateAndOpenPDF } from "@/app/utils/PdfUtils";
+import { set } from "lodash";
+import DateRangePicker from "@/components/DateRangePicker";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -41,6 +44,10 @@ const IncidentAlertScreen: React.FC = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
+
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
+  const [endDate, setEndDate] = useState<string | undefined>(undefined);
 
   // Function to retrieve user's emergency contact from storage
   const loadUserEmergencyContact = async () => {
@@ -147,7 +154,7 @@ const IncidentAlertScreen: React.FC = () => {
   const colorBottom = BOTTOM_COLORS_SPECTRUM[bottomIndex];
 
   const openEmergencySheet = () => {
-    generateAndOpenPDF();
+    setShowCalendar(true);
   };
 
   return (
@@ -178,6 +185,18 @@ const IncidentAlertScreen: React.FC = () => {
       >
         <Text style={styles.sendButtonText}>Enviar mensagem de emergência</Text>
       </TouchableOpacity> */}
+      <DateRangePicker
+        isVisible={showCalendar}
+        onVisibilityChange={setShowCalendar}
+        onDateSelected={(startDate, endDate) => {
+          console.log("Selected dates:", startDate, endDate);
+          if (startDate && endDate) {
+            let allDayEndDate = new Date(endDate);
+            allDayEndDate.setHours(23, 59, 59, 999);
+            generateAndOpenPDF(new Date(startDate), allDayEndDate);
+          }
+        }}
+      />
     </LinearGradient>
   );
 };

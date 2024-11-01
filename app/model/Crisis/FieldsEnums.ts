@@ -51,3 +51,16 @@ export enum RecoverySpeed {
   Rapid = "Rápida",
   Delayed = "Demorada",
 }
+
+export enum SleepStatus {
+  Good = "Boa",
+  Normal = "Razoável",
+  Bad = "Ruim",
+}
+
+export enum MenstruationOrPregnancy {
+  Pregnant = "Estou Grávida",
+  Menstruating = "No periodo",
+  Pre3Menstruation = "3 dias anteriores ao periodo",
+  No = "Não",
+}

@@ -5,12 +5,20 @@ import { Text, IconButton, Card } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native"; // Assuming you're using React Navigation
 import { Colors } from "@/constants/Colors";
 import { router } from "expo-router";
-import { generateAndSharePDF } from "@/app/utils/PdfUtils";
+import { generateAndOpenPDF, generateAndSharePDF } from "@/app/utils/PdfUtils";
+import DateRangePicker from "@/components/DateRangePicker";
 
 export default function ProfileScreen() {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const navigation = useNavigation(); // To navigate between screens
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
+  const [endDate, setEndDate] = useState<string | undefined>(undefined);
+
+  const openEmergencySheet = () => {
+    setShowCalendar(true);
+  };
 
   // Load user data (first and last name) when the component mounts
   useEffect(() => {
@@ -26,6 +34,25 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <DateRangePicker
+        isVisible={showCalendar}
+        onVisibilityChange={setShowCalendar}
+        onDateSelected={(startDate, endDate) => {
+          console.log("Selected dates:", startDate, endDate);
+          if (startDate && endDate) {
+            console.log("Generating PDF...");
+            let allDayEndDate = new Date(endDate);
+            allDayEndDate.setHours(23, 59, 59, 999);
+            generateAndSharePDF(new Date(startDate), allDayEndDate)
+              .then(() => {
+                console.log("PDF generated and shared successfully.");
+              })
+              .catch((error) => {
+                console.error("Error generating or sharing PDF:", error);
+              });
+          }
+        }}
+      />
       {/* Profile Picture */}
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
@@ -81,7 +108,7 @@ export default function ProfileScreen() {
       <View style={styles.cardGroup}>
         <TouchableOpacity
           onPress={() => {
-            generateAndSharePDF();
+            openEmergencySheet();
           }}
         >
           <Card style={styles.card}>
@@ -93,7 +120,7 @@ export default function ProfileScreen() {
                 icon="share"
                 size={24}
                 onPress={() => {
-                  generateAndSharePDF();
+                  openEmergencySheet();
                 }}
               />
             </View>
