@@ -3,7 +3,7 @@ import * as Print from "expo-print";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as WebBrowser from "expo-web-browser";
 import { User } from "../model/User";
-import { Crise } from "../model/Crise";
+import { Crisis } from "../model/Crisis/Crisis";
 import { isAndroid, isIOS } from "./Utils";
 import * as FileSystem from "expo-file-system";
 import { Platform } from "react-native";
@@ -11,28 +11,58 @@ import { Platform } from "react-native";
 // Helper function to prepare HTML content for PDF
 async function generateHTMLContent(): Promise<string> {
   const user = await User.getFromLocal();
-  const crises = await Crise.getCrises();
+  const crises = await Crisis.getCrises();
 
   // Calculate age based on birth date
   const age = user?.birthDate
     ? new Date().getFullYear() - user.birthDate.getFullYear()
     : "N/A";
 
+  // Find the date of the first crisis and the current date for the report period
+  const reportStartDate =
+    crises && crises.length > 0
+      ? new Date(
+          Math.min(
+            ...crises.map((c) =>
+              c.dateTime ? new Date(c.dateTime).getTime() : Infinity
+            )
+          )
+        )
+      : null;
+  const reportEndDate = new Date();
+  const reportPeriod = reportStartDate
+    ? `${reportStartDate.toLocaleDateString()} - ${reportEndDate.toLocaleDateString()}`
+    : "Período indisponível";
+
+  // Map CrisisDuration values to numeric values for averaging
+  const durationMapping: Record<string, number> = {
+    "< 1 minuto": 0.5,
+    "1 a 3 minutos": 2,
+    "> 5 minutos": 5,
+    "Não sei": 0,
+  };
+
   // Count occurrences of each symptom and crisis type for summary
   const symptomCounts: Record<string, number> = {};
   const crisisTypes: Record<string, number> = {};
   let totalDuration = 0;
+  let countedCrises = 0;
   crises?.forEach((crise) => {
     crise.symptomsBefore?.forEach((symptom) => {
       symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
     });
-    if (crise.type)
+    if (crise.type) {
       crisisTypes[crise.type] = (crisisTypes[crise.type] || 0) + 1;
-    totalDuration += Number(crise.duration) || 0;
+    }
+    const mappedDuration =
+      durationMapping[crise.duration as keyof typeof durationMapping];
+    if (mappedDuration !== undefined) {
+      totalDuration += mappedDuration;
+      countedCrises++;
+    }
   });
 
-  const avgDuration =
-    crises && crises.length > 0 ? totalDuration / crises.length : 0;
+  const avgDuration = countedCrises > 0 ? totalDuration / countedCrises : 0;
 
   const formatOccurrencePercentage = (
     occurrences: Record<string, number>,
@@ -67,7 +97,7 @@ async function generateHTMLContent(): Promise<string> {
       <body>
         <div class="header">
           <h1>Relatório Médico</h1>
-          <p><strong>Período do Relatório:</strong> ${new Date().toLocaleDateString()}</p>
+          <p><strong>Período do Relatório:</strong> ${reportPeriod}</p>
         </div>
 
         <div class="section">

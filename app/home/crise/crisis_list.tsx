@@ -11,12 +11,12 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { format, compareDesc } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { Crise } from "@/app/model/Crise";
+import { Crisis } from "@/app/model/Crisis/Crisis";
 import { router } from "expo-router";
 import { Colors } from "@/constants/Colors";
 
 // Utility function to group and sort crises by date
-const groupCrisesByDate = (crises: Crise[]) => {
+const groupCrisesByDate = (crises: Crisis[]) => {
   const grouped = crises.reduce((acc, crise) => {
     const dateKey = format(new Date(crise.dateTime!), "PPPP", { locale: ptBR });
     if (!acc[dateKey]) {
@@ -24,7 +24,7 @@ const groupCrisesByDate = (crises: Crise[]) => {
     }
     acc[dateKey].push(crise);
     return acc;
-  }, {} as Record<string, Crise[]>);
+  }, {} as Record<string, Crisis[]>);
 
   // Sort the dates in descending order
   const sortedDates = Object.keys(grouped).sort((a, b) => {
@@ -48,7 +48,7 @@ const groupCrisesByDate = (crises: Crise[]) => {
 };
 
 const CrisisListScreen: React.FC = () => {
-  const [sections, setSections] = useState<{ title: string; data: Crise[] }[]>(
+  const [sections, setSections] = useState<{ title: string; data: Crisis[] }[]>(
     []
   );
   const navigation = useNavigation();
@@ -64,14 +64,14 @@ const CrisisListScreen: React.FC = () => {
 
   // Function to fetch crises
   const fetchCrises = async () => {
-    const retrievedCrises = await Crise.getCrises();
+    const retrievedCrises = await Crisis.getCrises();
     if (retrievedCrises) {
       const groupedCrises = groupCrisesByDate(retrievedCrises);
       setSections(groupedCrises);
     }
   };
 
-  const seeDetails = (item: Crise) => {
+  const seeDetails = (item: Crisis) => {
     router.push({
       pathname: "/home/crise/crise_form",
       params: { id: item.id },
@@ -85,7 +85,7 @@ const CrisisListScreen: React.FC = () => {
     }, [])
   );
 
-  const renderCrisisItem = ({ item }: { item: Crise }) => {
+  const renderCrisisItem = ({ item }: { item: Crisis }) => {
     return (
       <Card style={styles.card}>
         <Card.Content>

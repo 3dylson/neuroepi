@@ -12,18 +12,23 @@ import {
 } from "react-native-paper";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Crise } from "@/app/model/Crise";
+import { Crisis } from "@/app/model/Crisis/Crisis";
 import { generateId, isAndroid, isIOS } from "@/app/utils/Utils";
 import { User } from "@/app/model/User";
 import Gender from "@/app/register/utils/GenderEnum";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
-// import { set } from "lodash"; // Removed unused import
+import {
+  AuraSymptoms,
+  CrisisTypes,
+  SymptomsAfter,
+  WasDoingTypes,
+} from "@/app/model/Crisis/FieldsEnums";
 
 // TODO: This should be done with Enums or Constants
 const CriseFormScreen: React.FC = () => {
   const params = useLocalSearchParams(); // Get the params from router
   const navigation = useNavigation();
-  const [crise, setCrise] = useState<Crise | null>(null);
+  const [crise, setCrise] = useState<Crisis | null>(null);
 
   const [dateTime, setDateTime] = useState(new Date());
   const [duration, setDuration] = useState("");
@@ -97,6 +102,7 @@ const CriseFormScreen: React.FC = () => {
   };
 
   const handleDelete = async () => {
+    console.log("Delete Crise:", crise);
     if (crise) {
       // present a confirmation dialog
       Alert.alert(
@@ -109,8 +115,9 @@ const CriseFormScreen: React.FC = () => {
           },
           {
             text: "Excluir",
+            style: "destructive",
             onPress: async () => {
-              await Crise.deleteCrise(crise.id!!);
+              await Crisis.deleteCrise(crise.id!!);
               router.back();
             },
           },
@@ -123,14 +130,13 @@ const CriseFormScreen: React.FC = () => {
   useEffect(() => {
     const loadCrise = async () => {
       if (params.id) {
-        const crises = await Crise.getCrises();
+        const crises = await Crisis.getCrises();
         const foundCrise = crises?.find((c) => c.id === params.id);
         if (foundCrise) {
           console.log("Found Crise:", foundCrise);
           const date = foundCrise.dateTime
             ? new Date(foundCrise.dateTime)
             : new Date();
-          setCrise(foundCrise);
           // Set form values based on the found Crise
           setDateTime(date);
           setDuration(foundCrise.duration || "");
@@ -159,6 +165,7 @@ const CriseFormScreen: React.FC = () => {
           setSubstanceUse(foundCrise.substanceUse || false);
           setSelfHarm(foundCrise.selfHarm || false);
           setSleepStatus(foundCrise.sleepStatus || "");
+          setCrise(foundCrise);
         }
       }
     };
@@ -299,7 +306,7 @@ const CriseFormScreen: React.FC = () => {
         .map((item) => item.trim())
         .filter((s) => s.trim() !== "")
     );
-    const newCrise = new Crise({
+    const newCrise = new Crisis({
       id: crise?.id || generateId(),
       dateTime,
       duration,
@@ -318,7 +325,7 @@ const CriseFormScreen: React.FC = () => {
       selfHarm,
     });
 
-    await Crise.addOrUpdateCrise(newCrise);
+    await Crisis.addOrUpdateCrise(newCrise);
     router.back();
   };
 
@@ -383,7 +390,7 @@ const CriseFormScreen: React.FC = () => {
         <Card.Title title="Duração da Crise" />
         <Card.Content>
           <RadioButton.Group onValueChange={setDuration} value={duration}>
-            <RadioButton.Item label="< 1 min" value="< 1 min" />
+            <RadioButton.Item label="< 1 minuto" value="< 1 minuto" />
             <RadioButton.Item label="1 a 3 minutos" value="1 a 3 minutos" />
             <RadioButton.Item label="> 5 minutos" value="> 5 minutos" />
             <RadioButton.Item label="Não sei" value="Não sei" />
@@ -763,6 +770,7 @@ const styles = StyleSheet.create({
 });
 
 export default CriseFormScreen;
+
 function getWasDoingTypes() {
   return [
     "Estudando",

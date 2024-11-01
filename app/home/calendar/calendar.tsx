@@ -10,7 +10,7 @@ import calendarIDs from "./calendarIDs";
 import { DoseFrequency } from "@/constants/DoseFrequency";
 import { User } from "@/app/model/User";
 import { Medicine } from "@/app/model/Medicine";
-import { Crise } from "@/app/model/Crise"; // Import Crise
+import { Crisis } from "@/app/model/Crisis/Crisis"; // Import Crise
 
 interface State {
   items?: AgendaSchedule;
@@ -31,7 +31,7 @@ export default class CalendarScreen extends Component<State> {
   // Load both Medicines and Crises into the Calendar
   loadUserMedicinesAndCrises = async () => {
     const user = await User.getFromLocal(); // Fetch user data
-    const crises = await Crise.getCrises(); // Fetch crises data
+    const crises = await Crisis.getCrises(); // Fetch crises data
 
     const items = this.state.items || {};
     const markedDates: { [key: string]: any } = {}; // For holding the dates with crises and medicines marked
@@ -118,7 +118,7 @@ export default class CalendarScreen extends Component<State> {
   };
 
   // Add crises to the calendar
-  addCriseToCalendar = (items: AgendaSchedule, crise: Crise) => {
+  addCriseToCalendar = (items: AgendaSchedule, crise: Crisis) => {
     const strTime = this.timeToString(new Date(crise.dateTime!).getTime());
 
     if (!items[strTime]) {

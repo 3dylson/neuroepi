@@ -5,7 +5,7 @@ import * as SecureStore from "expo-secure-store";
 import * as Notifications from "expo-notifications";
 import { Button, Switch, Text, List, Divider } from "react-native-paper";
 import { User } from "@/app/model/User";
-import { Crise } from "@/app/model/Crise";
+import { Crisis } from "@/app/model/Crisis/Crisis";
 import { RootParamList } from "@/app/types"; // Import your RootParamList
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DataKey } from "@/constants/DataKey";
@@ -40,7 +40,7 @@ const SettingsScreen: React.FC = () => {
           style: "destructive",
           onPress: async () => {
             await User.clearLocalData(); // Delete secure data
-            await Crise.deleteAllCrises(); // Delete all crises
+            await Crisis.deleteAllCrises(); // Delete all crises
             await AsyncStorage.multiRemove([DataKey.userFormIsComplete]); // Clear all async storage data
             Alert.alert(
               "Conta deletada",
