@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { TextInput, FAB, Text } from "react-native-paper";
 import { router, useLocalSearchParams } from "expo-router";
 import { FormStyles } from "./styles/FormStyle";
-import { Platform, TouchableOpacity, View } from "react-native";
+import { Keyboard, Platform, TouchableOpacity, View } from "react-native";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 import { DateTimePickerEvent } from "@react-native-community/datetimepicker";
@@ -71,6 +71,16 @@ export default function FormDiagnosis() {
     router.push("/register/form_medication"); // Navigate to the next screen
   };
 
+  const handleKeyPress = (e: any) => {
+    console.log("Key pressed:", e.nativeEvent.key);
+    // Allow line breaks with Shift + Enter
+    if (e.nativeEvent.key === "Enter" && !e.nativeEvent.shiftKey) {
+      e.preventDefault(); // Prevent new line insertion
+      Keyboard.dismiss(); // Dismiss the keyboard
+      // You can also handle any submission logic here if needed
+    }
+  };
+
   return (
     <View style={FormStyles.container}>
       <View style={FormStyles.content}>
@@ -83,7 +93,14 @@ export default function FormDiagnosis() {
           value={diagnosis}
           multiline={true}
           onChangeText={(text) => setDiagnosis(text)}
+          onKeyPress={handleKeyPress} // Capture key presses
+          onSubmitEditing={() => {
+            // Handle the done action
+            Keyboard.dismiss(); // To dismiss the keyboard
+          }}
           style={FormStyles.input}
+          returnKeyType="done" // This should show "Done" on the keyboard
+          blurOnSubmit={true} // Blurs the TextInput on submit
         />
         {Platform.OS === "ios" && (
           <Text style={[FormStyles.subtitle, { marginTop: 30 }]}>

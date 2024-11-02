@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, Keyboard } from "react-native";
 import {
   Text,
   TextInput,
@@ -53,6 +53,16 @@ const BottomSheetAddMedicineScreen: React.FC<
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleKeyPress = (e: any) => {
+    console.log("Key pressed:", e.nativeEvent.key);
+    // Allow line breaks with Shift + Enter
+    if (e.nativeEvent.key === "Enter" && !e.nativeEvent.shiftKey) {
+      e.preventDefault(); // Prevent new line insertion
+      Keyboard.dismiss(); // Dismiss the keyboard
+      // You can also handle any submission logic here if needed
+    }
   };
 
   const handleAlarmSwitchChange = async (value: boolean) => {
@@ -380,6 +390,13 @@ const BottomSheetAddMedicineScreen: React.FC<
         multiline={true}
         onChangeText={(text) => handleInputChange("notes", text)}
         mode="outlined"
+        onKeyPress={handleKeyPress} // Capture key presses
+        onSubmitEditing={() => {
+          // Handle the done action
+          Keyboard.dismiss(); // To dismiss the keyboard
+        }}
+        returnKeyType="done" // This should show "Done" on the keyboard
+        blurOnSubmit={true} // Blurs the TextInput on submit
         style={styles.notesInput}
       />
 
