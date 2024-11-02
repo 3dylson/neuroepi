@@ -127,6 +127,7 @@ export default function FormDoctorContact() {
           mode="outlined"
           label="Médico 1"
           keyboardType="phone-pad"
+          returnKeyType="done"
           value={phone1}
           onChangeText={handlePhone1Change}
           style={FormStyles.input}
@@ -141,6 +142,7 @@ export default function FormDoctorContact() {
           label="Médico 2 (Opcional)"
           keyboardType="phone-pad"
           value={phone2}
+          returnKeyType="done"
           onChangeText={handlePhone2Change}
           style={FormStyles.input}
           error={!!phone2Error} // Show error state if phone2 is invalid

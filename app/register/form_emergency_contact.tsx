@@ -95,6 +95,7 @@ export default function FormEmergencyContact() {
           mode="outlined"
           label="Telefone 1"
           keyboardType="phone-pad"
+          returnKeyType="done" // Show "Done" button
           value={phone1}
           onChangeText={handlePhone1Change}
           style={FormStyles.input}
@@ -110,6 +111,7 @@ export default function FormEmergencyContact() {
           keyboardType="phone-pad"
           value={phone2}
           onChangeText={(text) => setPhone2(text)}
+          returnKeyType="done"
           style={FormStyles.input}
         />
       </View>

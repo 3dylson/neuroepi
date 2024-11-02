@@ -24,4 +24,8 @@ export const FormStyles = StyleSheet.create({
     marginBottom: 40,
     alignSelf: "flex-end",
   },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
 });
