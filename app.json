@@ -5,7 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "neuroepi",
+    "scheme": "https",
+    "host": "neuroepi.app",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -17,7 +18,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Este aplicativo precisa acessar sua localização para enviar alertas de emergência.",
         "NSCalendarsUsageDescription": "Este aplicativo precisa acessar seu calendário para criar lembretes de medicamentos."
-      }
+      },
+      "bundleIdentifier": "pt.neuroepi.app"
     },
     "android": {
       "adaptiveIcon": {

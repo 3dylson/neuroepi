@@ -117,11 +117,12 @@ const IncidentAlertScreen: React.FC = () => {
 
     // Deep link and location URL
     const deepLink = redirectBackToAppUrl;
+    console.log("Deep link:", deepLink);
     const { latitude, longitude } = location;
     const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
 
     // Create the emergency message
-    const message = `Localização atual: ${locationLink}\nVoltar a neuroepi: ${deepLink}`;
+    const message = `Estou a ter uma crise epiléptica. Por favor, ajuda-me.\nLocalização atual: ${locationLink}\nVoltar a neuroepi: ${deepLink}`;
 
     // Function to send SMS (plain text)
     const sendSMS = () => {

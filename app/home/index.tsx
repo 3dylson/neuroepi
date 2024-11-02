@@ -92,7 +92,7 @@ const HomeLayout: React.FC = () => {
           style={styles.sosButtonContainer}
         >
           <LinearGradient
-            colors={["#FF5F6D", "#FFC371"]} // Gradient for a modern look
+            colors={["#6a11cb", "#2575fc"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.sosButton}

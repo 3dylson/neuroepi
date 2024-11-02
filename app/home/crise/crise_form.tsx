@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ScrollView, StyleSheet, Alert } from "react-native";
+import { ScrollView, StyleSheet, Alert, View } from "react-native";
 import {
   Text,
   TextInput,
@@ -45,6 +45,7 @@ const CriseFormScreen: React.FC = () => {
   const [substanceUse, setSubstanceUse] = useState(false);
   const [selfHarm, setSelfHarm] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showAndroidCalender, setShowAndroidCalender] = useState(false);
   const [sleepStatus, setSleepStatus] = useState("");
 
   const [couldHaveMenstruation, setCouldHaveMenstruation] =
@@ -366,7 +367,6 @@ const CriseFormScreen: React.FC = () => {
               value={dateTime}
               mode="time"
               display="spinner"
-              maximumDate={new Date()} // Restrict future dates
               onChange={(_, selectedDate) => {
                 setShowDatePicker(false);
                 if (selectedDate) setDateTime(selectedDate);
@@ -374,10 +374,37 @@ const CriseFormScreen: React.FC = () => {
               onDismiss={() => setShowDatePicker(false)}
             />
           )}
+          {showAndroidCalender && (
+            <CustomDateTimePicker
+              value={dateTime}
+              mode="date"
+              display="calendar"
+              maximumDate={new Date()} // Restrict future dates
+              onChange={(_, selectedDate) => {
+                setShowAndroidCalender(false);
+                if (selectedDate) setDateTime(selectedDate);
+              }}
+              onDismiss={() => setShowAndroidCalender(false)}
+            />
+          )}
           {isAndroid() && (
-            <Button mode="contained" onPress={() => setShowDatePicker(true)}>
-              Escolher Hora da Crise
-            </Button>
+            <View style={styles.buttonContainer}>
+              <Button
+                mode="contained"
+                onPress={() => setShowDatePicker(true)}
+                style={styles.button}
+              >
+                Hora da Crise
+              </Button>
+
+              <Button
+                mode="contained"
+                onPress={() => setShowAndroidCalender(true)}
+                style={styles.button}
+              >
+                Data da Crise
+              </Button>
+            </View>
           )}
         </Card.Content>
       </Card>
@@ -763,6 +790,15 @@ const styles = StyleSheet.create({
 
   insideRadioItem: {
     marginStart: 16,
+  },
+  buttonContainer: {
+    flexDirection: "row", // Arrange children horizontally
+    justifyContent: "space-between", // Optional: space between buttons
+    padding: 10, // Optional: padding around the container
+  },
+  button: {
+    flex: 1, // Optional: make buttons take equal space
+    marginHorizontal: 5, // Space between buttons
   },
 });
 

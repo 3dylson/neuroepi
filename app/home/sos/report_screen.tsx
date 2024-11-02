@@ -4,6 +4,7 @@ import {
   Text,
   ActivityIndicator,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useLocalSearchParams, useNavigation } from "expo-router";
@@ -24,7 +25,20 @@ const ReportScreen: React.FC = () => {
     if (pdfPath) {
       navigation.setOptions({
         headerRight: () => (
-          <IconButton icon="share" onPress={() => sharePDF(pdfPath)} />
+          <TouchableOpacity
+            onPress={() => sharePDF(pdfPath)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 10,
+            }}
+            activeOpacity={0.6}
+            accessibilityLabel="Share PDF"
+            accessibilityRole="button"
+          >
+            <IconButton icon="share" />
+            <Text style={{ marginLeft: 8 }}>Partilhar</Text>
+          </TouchableOpacity>
         ),
       });
     }
@@ -34,7 +48,11 @@ const ReportScreen: React.FC = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {loading && <ActivityIndicator size="large" color="#0000ff" />}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
       {error && (
         <View style={styles.error}>
           <Text>Erro ao carregar PDF</Text>
@@ -61,6 +79,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: Dimensions.get("window").height,
   },
   error: {
     justifyContent: "center",
