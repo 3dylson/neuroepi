@@ -32,14 +32,27 @@
         "READ_CALENDAR",
         "WRITE_CALENDAR",
         "NOTIFICATIONS"
-      ]
+      ],
+      "package": "pt.neuroepi.app"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": ["expo-router", "expo-calendar", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-location",
+      "expo-calendar",
+      "expo-secure-store",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/"
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     },
