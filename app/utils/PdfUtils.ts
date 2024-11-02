@@ -198,7 +198,7 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
     if (crisis.sleepStatus === SleepStatus.Bad) poorSleepCount++;
     if (crisis.alcohol) alcoholCount++;
     if (crisis.food && crisis.food !== "Não") foodVarietyCount++;
-    if (crisis.emotionalStress) emotionalStressCount++;
+    if (crisis.emotionalStress !== "Não") emotionalStressCount++;
     if (crisis.substanceUse) substanceUseCount++;
     if (crisis.selfHarm) selfHarmCount++;
   });
@@ -280,7 +280,6 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
         }</p>
         <p><strong>Data de nascimento:</strong> ${birthDate}</p>
         <p><strong>Contato de emergência 1:</strong> ${emergencyContact}</p>
-        <p><strong>Contato de emergência 2:</strong> ${emergencyContact2}</p>
         <p><strong>Contato de emergência 2:</strong> ${emergencyContact2}</p>
         <p><strong>Tipo de crise ou síndrome epiléptica:</strong> ${
           user?.diagnostic || "N/A"

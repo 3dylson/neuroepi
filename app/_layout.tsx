@@ -1,6 +1,6 @@
 import { Colors } from "@/constants/Colors";
 import { useFonts } from "expo-font";
-import { Stack, useNavigationContainerRef } from "expo-router";
+import { router, Stack, useNavigationContainerRef } from "expo-router";
 import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import {
@@ -11,6 +11,7 @@ import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Sentry from "@sentry/react-native";
 import { isRunningInExpoGo } from "expo";
+import { Linking } from "react-native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -50,6 +51,35 @@ function RootLayout() {
       routingInstrumentation.registerNavigationContainer(ref);
     }
   }, [ref]);
+
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      console.log("Deep link URL:", url);
+
+      // Parse the URL and navigate accordingly
+      switch (url) {
+        case "neuroepi://home/sos/incident_alert":
+          router.push("/home/sos/incident_alert");
+          break;
+        default:
+          console.warn("Unhandled deep link:", url);
+          break;
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (loaded) {
