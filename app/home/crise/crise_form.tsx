@@ -17,12 +17,7 @@ import { generateId, isAndroid, isIOS } from "@/app/utils/Utils";
 import { User } from "@/app/model/User";
 import Gender from "@/app/register/utils/GenderEnum";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
-import {
-  AuraSymptoms,
-  CrisisTypes,
-  SymptomsAfter,
-  WasDoingTypes,
-} from "@/app/model/Crisis/FieldsEnums";
+import { DateUtils } from "@/app/utils/TimeUtils";
 
 // TODO: This should be done with Enums or Constants
 const CriseFormScreen: React.FC = () => {
@@ -178,7 +173,9 @@ const CriseFormScreen: React.FC = () => {
       const savedUser = await User.getFromLocal();
       if (savedUser) {
         let gender = savedUser.gender;
-        let age = savedUser.birthDate?.getAge();
+        let age = savedUser.birthDate
+          ? DateUtils.getAge(savedUser.birthDate)
+          : undefined;
         if (gender === Gender.Female && age) {
           setCouldHaveMenstruation(age > 12);
         }
@@ -342,9 +339,9 @@ const CriseFormScreen: React.FC = () => {
           <TextInput
             label="Data e Hora"
             value={
-              dateTime.toDayMonthYearString() +
+              DateUtils.toDayMonthYearString(dateTime) +
               " - " +
-              dateTime.toHourMinuteString()
+              DateUtils.toHourMinuteString(dateTime)
             } // Format the date/time input
             // onFocus={() => setShowDatePicker(true)}
             // onPress={() => setShowDatePicker(true)}

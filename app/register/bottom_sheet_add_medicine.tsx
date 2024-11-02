@@ -19,12 +19,11 @@ import * as Notifications from "expo-notifications";
 import {
   getDefaultCalendarId,
   getNextNotificationDates,
-  parseTimeStrings,
   requestCalendarPermission,
-  requestNotificationPermission,
 } from "../utils/NotifUtils";
 import * as Calendar from "expo-calendar";
 import * as Localization from "expo-localization";
+import { DateUtils } from "../utils/TimeUtils";
 
 interface BottomSheetAddMedicineScreenProps {
   onClose: () => void;
@@ -213,7 +212,10 @@ const BottomSheetAddMedicineScreen: React.FC<
           onChange={(event, date) => {
             if (date) {
               setSelectedTime(date);
-              handleTimeChange(timeList.length - 1, date.toHourMinuteString());
+              handleTimeChange(
+                timeList.length - 1,
+                DateUtils.toHourMinuteString(date)
+              );
             }
           }}
         />
@@ -222,7 +224,7 @@ const BottomSheetAddMedicineScreen: React.FC<
             mode="contained"
             onPress={() => {
               if (selectedTime) {
-                const timeString = selectedTime.toHourMinuteString();
+                const timeString = DateUtils.toHourMinuteString(selectedTime);
                 selectItem(timeString);
               }
             }}
@@ -344,7 +346,7 @@ const BottomSheetAddMedicineScreen: React.FC<
               onChange={(event, date) => {
                 if (date) {
                   setRenderAndroidTimePicker(null);
-                  const timeString = date.toHourMinuteString();
+                  const timeString = DateUtils.toHourMinuteString(date);
                   handleTimeChange(index, timeString);
                 }
               }}

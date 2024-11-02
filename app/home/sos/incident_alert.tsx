@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Platform,
-  SafeAreaView,
-} from "react-native";
+import { Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
@@ -16,9 +8,9 @@ import Chroma from "chroma-js";
 import * as Location from "expo-location"; // Use expo-location for location services
 import { User } from "@/app/model/User";
 import * as Linking from "expo-linking";
-import { generateAndOpenPDF } from "@/app/utils/PdfUtils";
-import { set } from "lodash";
+import { generateAndOpenPDF, generatePDF } from "@/app/utils/PdfUtils";
 import DateRangePicker from "@/components/DateRangePicker";
+import { router } from "expo-router";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -58,6 +50,22 @@ const IncidentAlertScreen: React.FC = () => {
       setEmergencyContactNumber(null); // Handle missing contact
     }
   };
+
+  async function handleDateSelection(
+    startDate: string | undefined,
+    endDate: string | undefined
+  ) {
+    console.log("Selected dates:", startDate, endDate);
+    if (startDate && endDate) {
+      let allDayEndDate = new Date(endDate);
+      allDayEndDate.setHours(23, 59, 59, 999);
+      let pdfPath = await generatePDF(new Date(startDate), allDayEndDate);
+      router.push({
+        pathname: "/home/sos/report_screen",
+        params: { pdfPath: pdfPath },
+      });
+    }
+  }
 
   const redirectBackToAppUrl = Linking.createURL("home/sos/incident_alert");
 
@@ -113,7 +121,7 @@ const IncidentAlertScreen: React.FC = () => {
     const locationLink = `https://maps.google.com/?q=${latitude},${longitude}`;
 
     // Create the emergency message
-    const message = `Estou a ter uma crise epiléptica. Por favor, ajuda-me.\nLocalização atual: ${locationLink}\nVoltar a neuroepi: ${deepLink}`;
+    const message = `Localização atual: ${locationLink}\nVoltar a neuroepi: ${deepLink}`;
 
     // Function to send SMS (plain text)
     const sendSMS = () => {
@@ -188,13 +196,8 @@ const IncidentAlertScreen: React.FC = () => {
       <DateRangePicker
         isVisible={showCalendar}
         onVisibilityChange={setShowCalendar}
-        onDateSelected={(startDate, endDate) => {
-          console.log("Selected dates:", startDate, endDate);
-          if (startDate && endDate) {
-            let allDayEndDate = new Date(endDate);
-            allDayEndDate.setHours(23, 59, 59, 999);
-            generateAndOpenPDF(new Date(startDate), allDayEndDate);
-          }
+        onDateSelected={async (startDate, endDate) => {
+          await handleDateSelection(startDate, endDate);
         }}
       />
     </LinearGradient>

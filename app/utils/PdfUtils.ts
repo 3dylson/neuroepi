@@ -1,12 +1,10 @@
-import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
 import * as IntentLauncher from "expo-intent-launcher";
-import * as WebBrowser from "expo-web-browser";
 import { User } from "../model/User";
 import { Crisis } from "../model/Crisis/Crisis";
-import { isAndroid, isIOS } from "./Utils";
 import * as FileSystem from "expo-file-system";
 import { Platform } from "react-native";
+import * as Sharing from "expo-sharing";
 import {
   MenstruationOrPregnancy,
   SleepStatus,
@@ -379,7 +377,10 @@ function cssStyles(): string {
 }
 
 // Helper to generate and get URI of a PDF
-async function generatePDF(startDate: Date, endDate: Date): Promise<string> {
+export async function generatePDF(
+  startDate: Date,
+  endDate: Date
+): Promise<string> {
   const crisis = await Crisis.getCrises();
   // get crises between the selected dates
   const crises = crisis?.filter(
@@ -391,6 +392,26 @@ async function generatePDF(startDate: Date, endDate: Date): Promise<string> {
   const htmlContent = await generateHTMLContent(crises || null);
   const { uri } = await Print.printToFileAsync({ html: htmlContent });
   return uri;
+}
+
+export async function sharePDF(uri: string) {
+  try {
+    const isSharingAvailable = await Sharing.isAvailableAsync();
+    console.log("Is sharing available:", isSharingAvailable);
+
+    if (isSharingAvailable) {
+      await Sharing.shareAsync(uri, {
+        mimeType: "application/pdf",
+        dialogTitle: "Share your PDF",
+        UTI: "com.adobe.pdf",
+      });
+      console.log("PDF shared successfully.");
+    } else {
+      console.log("Sharing is not available on this device.");
+    }
+  } catch (error) {
+    console.error("Error sharing PDF:", error);
+  }
 }
 
 // Generate and share PDF
