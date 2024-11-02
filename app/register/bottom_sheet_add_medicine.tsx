@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Keyboard } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import {
   Text,
   TextInput,
@@ -247,173 +254,188 @@ const BottomSheetAddMedicineScreen: React.FC<
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <IconButton icon="close" onPress={onClose} />
-        <Text variant="titleLarge" style={styles.headerTitle}>
-          Medicamento
-        </Text>
-        <Button onPress={handleSave}>GUARDAR</Button>
-      </View>
-
-      <TextInput
-        label="Nome"
-        value={formState.name}
-        onChangeText={(text) => handleInputChange("name", text)}
-        left={<TextInput.Icon icon="pill" />}
-        mode="outlined"
-        style={styles.input}
-      />
-
-      <Text style={styles.label}>Este medicamento é para:</Text>
-      <RadioButton.Group
-        onValueChange={(value) =>
-          handleInputChange("isForEpilepsy", value === "epilepsy")
-        }
-        value={formState.isForEpilepsy ? "epilepsy" : "other"}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.keyboardAvoidingView}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
       >
-        <View style={styles.radioGroup}>
-          <RadioButton.Item label="Epilepsia" value="epilepsy" />
-          <RadioButton.Item label="Outra condição" value="other" />
+        <View style={styles.header}>
+          <IconButton icon="close" onPress={onClose} />
+          <Text variant="titleLarge" style={styles.headerTitle}>
+            Medicamento
+          </Text>
+          <Button onPress={handleSave}>GUARDAR</Button>
         </View>
-      </RadioButton.Group>
 
-      {formState.isForEpilepsy === false && (
         <TextInput
-          label="Este medicamento está relacionado com"
-          value={formState.relatedMedication}
-          onChangeText={(text) => handleInputChange("relatedMedication", text)}
+          label="Nome"
+          value={formState.name}
+          onChangeText={(text) => handleInputChange("name", text)}
+          left={<TextInput.Icon icon="pill" />}
           mode="outlined"
           style={styles.input}
         />
-      )}
 
-      <View style={styles.rowDose}>
-        <TextInput
-          label="Dose"
-          value={formState.dose}
-          onChangeText={(text) => handleInputChange("dose", text)}
-          mode="outlined"
-          style={styles.doseInput}
-          keyboardType="numeric"
-        />
-        <DropDownInput
-          label="Unidade"
-          text={formState.doseUnit.toString()}
-          textInputProps={{
-            editable: false,
-            mode: "outlined",
-            style: styles.unitInput,
-          }}
-          renderPopoverContent={renderDoseUnitPopoverContent}
-        />
-      </View>
+        <Text style={styles.label}>Este medicamento é para:</Text>
+        <RadioButton.Group
+          onValueChange={(value) =>
+            handleInputChange("isForEpilepsy", value === "epilepsy")
+          }
+          value={formState.isForEpilepsy ? "epilepsy" : "other"}
+        >
+          <View style={styles.radioGroup}>
+            <RadioButton.Item label="Epilepsia" value="epilepsy" />
+            <RadioButton.Item label="Outra condição" value="other" />
+          </View>
+        </RadioButton.Group>
 
-      <DropDownInput
-        label="Frequência"
-        text={formState.frequency?.toString() ?? ""}
-        textInputProps={{
-          editable: false,
-          mode: "outlined",
-          style: [styles.input, { flex: 1, marginTop: 16 }],
-          left: <TextInput.Icon icon="repeat" />,
-        }}
-        renderPopoverContent={renderFrequencyPopoverContent}
-      />
+        {formState.isForEpilepsy === false && (
+          <TextInput
+            label="Este medicamento está relacionado com"
+            value={formState.relatedMedication}
+            onChangeText={(text) =>
+              handleInputChange("relatedMedication", text)
+            }
+            mode="outlined"
+            style={styles.input}
+          />
+        )}
 
-      <Text style={styles.label}>Horários</Text>
-      {timeList.map((time, index) => (
-        <View style={styles.row} key={index}>
+        <View style={styles.rowDose}>
+          <TextInput
+            label="Dose"
+            value={formState.dose}
+            onChangeText={(text) => handleInputChange("dose", text)}
+            mode="outlined"
+            style={styles.doseInput}
+            keyboardType="numeric"
+          />
           <DropDownInput
-            label=""
-            text={time}
+            label="Unidade"
+            text={formState.doseUnit.toString()}
             textInputProps={{
               editable: false,
               mode: "outlined",
-              style: styles.timeInput,
+              style: styles.unitInput,
             }}
-            {...(isIOS() && {
-              renderPopoverContent: renderTimePopoverContent,
-            })}
-            customAction={() => {
-              if (isAndroid()) {
-                setRenderAndroidTimePicker(index);
-              }
-            }}
+            renderPopoverContent={renderDoseUnitPopoverContent}
           />
-          {index > 0 && (
-            <IconButton
-              icon="minus-circle-outline"
-              onPress={() => removeTimeInput(index)}
-            />
-          )}
+        </View>
 
-          {renderAndroidTimePicker === index && (
-            <CustomDateTimePicker
-              value={new Date()}
-              mode="time"
-              display="spinner"
-              onChange={(event, date) => {
-                if (date) {
-                  setRenderAndroidTimePicker(null);
-                  const timeString = DateUtils.toHourMinuteString(date);
-                  handleTimeChange(index, timeString);
+        <DropDownInput
+          label="Frequência"
+          text={formState.frequency?.toString() ?? ""}
+          textInputProps={{
+            editable: false,
+            mode: "outlined",
+            style: [styles.input, { flex: 1, marginTop: 16 }],
+            left: <TextInput.Icon icon="repeat" />,
+          }}
+          renderPopoverContent={renderFrequencyPopoverContent}
+        />
+
+        <Text style={styles.label}>Horários</Text>
+        {timeList.map((time, index) => (
+          <View style={styles.row} key={index}>
+            <DropDownInput
+              label=""
+              text={time}
+              textInputProps={{
+                editable: false,
+                mode: "outlined",
+                style: styles.timeInput,
+              }}
+              {...(isIOS() && {
+                renderPopoverContent: renderTimePopoverContent,
+              })}
+              customAction={() => {
+                if (isAndroid()) {
+                  setRenderAndroidTimePicker(index);
                 }
               }}
-              onDismiss={() => setRenderAndroidTimePicker(null)}
             />
-          )}
+            {index > 0 && (
+              <IconButton
+                icon="minus-circle-outline"
+                onPress={() => removeTimeInput(index)}
+              />
+            )}
+
+            {renderAndroidTimePicker === index && (
+              <CustomDateTimePicker
+                value={new Date()}
+                mode="time"
+                display="spinner"
+                onChange={(event, date) => {
+                  if (date) {
+                    setRenderAndroidTimePicker(null);
+                    const timeString = DateUtils.toHourMinuteString(date);
+                    handleTimeChange(index, timeString);
+                  }
+                }}
+                onDismiss={() => setRenderAndroidTimePicker(null)}
+              />
+            )}
+          </View>
+        ))}
+
+        {checkLastTimeInputFilled() && (
+          <CustomButton
+            mode="text"
+            style={{ marginBottom: 16 }}
+            onPress={addTimeInput}
+          >
+            Adicionar Mais Doses
+          </CustomButton>
+        )}
+
+        <View style={styles.switchContainer}>
+          <Text>Adicionar Alarme</Text>
+          <Switch
+            value={formState.setAlarm}
+            onValueChange={(value) => handleAlarmSwitchChange(value)}
+          />
         </View>
-      ))}
 
-      {checkLastTimeInputFilled() && (
-        <CustomButton
-          mode="text"
-          style={{ marginBottom: 16 }}
-          onPress={addTimeInput}
-        >
-          Adicionar Mais Doses
-        </CustomButton>
-      )}
-
-      <View style={styles.switchContainer}>
-        <Text>Adicionar Alarme</Text>
-        <Switch
-          value={formState.setAlarm}
-          onValueChange={(value) => handleAlarmSwitchChange(value)}
+        <Text style={styles.label}>Notas</Text>
+        <TextInput
+          value={formState.notes}
+          multiline={true}
+          onChangeText={(text) => handleInputChange("notes", text)}
+          mode="outlined"
+          onKeyPress={handleKeyPress} // Capture key presses
+          onSubmitEditing={() => {
+            // Handle the done action
+            Keyboard.dismiss(); // To dismiss the keyboard
+          }}
+          returnKeyType="done" // This should show "Done" on the keyboard
+          blurOnSubmit={true} // Blurs the TextInput on submit
+          style={styles.notesInput}
         />
-      </View>
 
-      <Text style={styles.label}>Notas</Text>
-      <TextInput
-        value={formState.notes}
-        multiline={true}
-        onChangeText={(text) => handleInputChange("notes", text)}
-        mode="outlined"
-        onKeyPress={handleKeyPress} // Capture key presses
-        onSubmitEditing={() => {
-          // Handle the done action
-          Keyboard.dismiss(); // To dismiss the keyboard
-        }}
-        returnKeyType="done" // This should show "Done" on the keyboard
-        blurOnSubmit={true} // Blurs the TextInput on submit
-        style={styles.notesInput}
-      />
-
-      <CustomButton
-        mode="contained"
-        style={styles.saveButton}
-        onPress={handleSave}
-      >
-        Guardar
-      </CustomButton>
-    </ScrollView>
+        <CustomButton
+          mode="contained"
+          style={styles.saveButton}
+          onPress={handleSave}
+        >
+          Guardar
+        </CustomButton>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   container: {
-    padding: 8,
+    padding: 16,
+    flexGrow: 1, // Allow the content to grow
   },
   label: {
     marginBottom: 4,
