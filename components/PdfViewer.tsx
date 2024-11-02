@@ -24,7 +24,8 @@ export type RenderType =
   | "BASE64_TO_LOCAL_PDF"
   | "URL_TO_BASE64"
   | "GOOGLE_READER"
-  | "GOOGLE_DRIVE_VIEWER";
+  | "GOOGLE_DRIVE_VIEWER"
+  | "HTML_CONTENT";
 
 export interface CustomStyle {
   readerContainer?: CSS.Properties;
@@ -41,6 +42,7 @@ export interface Source {
   uri?: string;
   base64?: string;
   headers?: { [key: string]: string };
+  html?: string;
 }
 
 export interface Props {
@@ -183,7 +185,9 @@ const getRenderType = ({
   useGoogleDriveViewer?: boolean;
   useGoogleReader?: boolean;
 }) => {
-  const { uri, base64 } = source;
+  const { uri, base64, html } = source;
+
+  if (html) return "HTML_CONTENT";
 
   if (useGoogleReader) {
     return "GOOGLE_READER";
@@ -227,6 +231,8 @@ const getWebviewSource = ({
   switch (renderType!) {
     case "GOOGLE_READER":
       return { uri: getGoogleReaderUrl(uri!) };
+    case "HTML_CONTENT":
+      return { html: source.html! };
     case "GOOGLE_DRIVE_VIEWER":
       return { uri: getGoogleDriveUrl(uri || "") };
     case "DIRECT_BASE64":

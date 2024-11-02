@@ -9,8 +9,11 @@ import * as Location from "expo-location"; // Use expo-location for location ser
 import { User } from "@/app/model/User";
 import * as Linking from "expo-linking";
 import { generateAndOpenPDF, generatePDF } from "@/app/utils/PdfUtils";
+import * as FileSystem from "expo-file-system";
 import DateRangePicker from "@/components/DateRangePicker";
+import * as IntentLauncher from "expo-intent-launcher";
 import { router } from "expo-router";
+import { isIOS } from "@/app/utils/Utils";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -60,10 +63,19 @@ const IncidentAlertScreen: React.FC = () => {
       let allDayEndDate = new Date(endDate);
       allDayEndDate.setHours(23, 59, 59, 999);
       let pdfPath = await generatePDF(new Date(startDate), allDayEndDate);
-      router.push({
-        pathname: "/home/sos/report_screen",
-        params: { pdfPath: pdfPath },
-      });
+      if (isIOS()) {
+        router.push({
+          pathname: "/home/sos/report_screen",
+          params: { pdfPath: pdfPath },
+        });
+      } else {
+        const contentUri = await FileSystem.getContentUriAsync(pdfPath);
+        await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+          data: contentUri,
+          flags: 1,
+          type: "application/pdf",
+        });
+      }
     }
   }
 

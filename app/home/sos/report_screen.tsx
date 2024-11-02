@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -5,24 +6,44 @@ import {
   ActivityIndicator,
   Dimensions,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { IconButton } from "react-native-paper";
+import * as FileSystem from "expo-file-system";
 import { sharePDF } from "@/app/utils/PdfUtils";
-import { useState, useEffect } from "react";
+import * as IntentLauncher from "expo-intent-launcher";
 import PdfViewer from "@/components/PdfViewer";
+import { isIOS } from "@/app/utils/Utils";
 
 const ReportScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const params = useLocalSearchParams();
   const navigation = useNavigation();
 
   const pdfPath = params.pdfPath as string;
 
   useEffect(() => {
-    console.log("PDF Path:", pdfPath); // Debugging statement
+    const loadPdfBase64 = async () => {
+      try {
+        if (pdfPath) {
+          setHtmlContent(pdfPath);
+
+          setLoading(false);
+        } else {
+          setError(true);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error loading PDF as base64:", error);
+        setError(true);
+        setLoading(false);
+      }
+    };
+
+    loadPdfBase64();
 
     if (pdfPath) {
       navigation.setOptions({
@@ -43,13 +64,8 @@ const ReportScreen: React.FC = () => {
           </TouchableOpacity>
         ),
       });
-    } else {
-      setError(true); // Set error if pdfPath is missing or invalid
-      setLoading(false); // Stop loading if pdfPath is invalid
     }
   }, [navigation, pdfPath]);
-
-  const source = { uri: pdfPath };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -63,18 +79,16 @@ const ReportScreen: React.FC = () => {
           <Text>Erro ao carregar PDF</Text>
         </View>
       )}
-      {!error && pdfPath && (
+      {!error && htmlContent && (
         <PdfViewer
-          source={source}
+          source={{ uri: htmlContent }}
           noLoader={true}
           onLoad={() => {
-            console.log("PDF Loaded successfully"); // Debugging statement
-            setLoading(false);
+            console.log("PDF Loaded successfully");
           }}
           onError={() => {
-            console.log("Error loading PDF"); // Debugging statement
+            console.log("Error loading PDF");
             setError(true);
-            setLoading(false);
           }}
           style={styles.pdf}
         />
