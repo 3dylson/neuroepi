@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { View, Alert, StyleSheet, Linking } from "react-native";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
-import * as SecureStore from "expo-secure-store";
+import {
+  useNavigation,
+  NavigationProp,
+  ParamListBase,
+} from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import { Button, Switch, Text, List, Divider } from "react-native-paper";
 import { User } from "@/app/model/User";
 import { Crisis } from "@/app/model/Crisis/Crisis";
-import { RootParamList } from "@/app/types"; // Import your RootParamList
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DataKey } from "@/constants/DataKey";
 
 const SettingsScreen: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
-  const navigation = useNavigation<NavigationProp<RootParamList>>(); // Specify navigation type
+  const navigation = useNavigation<NavigationProp<ParamListBase>>(); // Specify navigation type
 
   // Check the current notification status when the component mounts
   useEffect(() => {

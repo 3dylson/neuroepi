@@ -18,6 +18,7 @@ export class User {
   diagnostic?: string;
   diagnosticDate?: Date;
   medicines?: Medicine[];
+  allergies?: string[];
   surgery?: string[];
   neurostimulators?: string[];
   medicPhone?: string;

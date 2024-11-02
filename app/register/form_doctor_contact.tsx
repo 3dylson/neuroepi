@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { TextInput, FAB, Text } from "react-native-paper";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { FormStyles } from "./styles/FormStyle";
 import { View } from "react-native";
 import { RegisterInfoAlert } from "./utils/RegisterInfoAlert";
@@ -8,6 +8,7 @@ import { PhoneRegex } from "../utils/StringUtils";
 import { User } from "../model/User";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DataKey } from "@/constants/DataKey";
+import { NavigationProp, ParamListBase } from "@react-navigation/native";
 
 export default function FormDoctorContact() {
   const [phone1, setPhone1] = useState<string>("");
@@ -16,6 +17,7 @@ export default function FormDoctorContact() {
   const [phone2Error, setPhone2Error] = useState<string>("");
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
   const params = useLocalSearchParams();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>(); // Specify navigation type
 
   const closeDialog = () => router.setParams({ showHelpDialog: "false" });
 
@@ -105,7 +107,10 @@ export default function FormDoctorContact() {
     // Mark the user form as complete
     await setUserFormComplete();
 
-    router.replace("/home"); // Navigate to the home page
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "home" }],
+    });
   };
 
   return (

@@ -16,12 +16,14 @@ import PdfViewer from "@/components/PdfViewer";
 const ReportScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const params = useLocalSearchParams(); // Get the params from router
+  const params = useLocalSearchParams();
   const navigation = useNavigation();
 
   const pdfPath = params.pdfPath as string;
 
   useEffect(() => {
+    console.log("PDF Path:", pdfPath); // Debugging statement
+
     if (pdfPath) {
       navigation.setOptions({
         headerRight: () => (
@@ -41,10 +43,13 @@ const ReportScreen: React.FC = () => {
           </TouchableOpacity>
         ),
       });
+    } else {
+      setError(true); // Set error if pdfPath is missing or invalid
+      setLoading(false); // Stop loading if pdfPath is invalid
     }
   }, [navigation, pdfPath]);
 
-  const source = { uri: pdfPath, cache: true };
+  const source = { uri: pdfPath };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -61,8 +66,13 @@ const ReportScreen: React.FC = () => {
       {!error && pdfPath && (
         <PdfViewer
           source={source}
-          onLoad={() => setLoading(false)}
+          noLoader={true}
+          onLoad={() => {
+            console.log("PDF Loaded successfully"); // Debugging statement
+            setLoading(false);
+          }}
           onError={() => {
+            console.log("Error loading PDF"); // Debugging statement
             setError(true);
             setLoading(false);
           }}

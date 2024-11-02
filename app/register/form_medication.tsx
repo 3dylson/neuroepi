@@ -174,7 +174,7 @@ export default function FormMedication({
         <FAB
           icon="arrow-right"
           style={FormStyles.fab}
-          onPress={() => router.push("/register/form_surgery_neurostimulator")}
+          onPress={() => router.push("/register/form_medication_allergies")}
         />
       )}
 

@@ -9,6 +9,8 @@ import {
   MenstruationOrPregnancy,
   SleepStatus,
 } from "../model/Crisis/FieldsEnums";
+import { DateUtils } from "./TimeUtils";
+import { Medicine } from "../model/Medicine";
 
 // Helper function to format HTML content sections
 function formatHTMLSection(title: string, content: string) {
@@ -35,6 +37,16 @@ function formatReportPeriod(crises: Crisis[]): string {
   );
   const end = new Date();
   return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+}
+
+function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
+  if (!medicines) {
+    return ["N/A"];
+  }
+
+  return medicines
+    .filter((m) => !m.isForEpilepsy && m.relatedMedication !== undefined)
+    .map((m) => m.relatedMedication);
 }
 
 // Helper function to format each crisis detail in HTML format
@@ -105,6 +117,11 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
   const user = await User.getFromLocal();
 
   const age = calculateAge(user?.birthDate);
+  const birthDate = user?.birthDate
+    ? DateUtils.toDayMonthYearString(user.birthDate)
+    : "N/A";
+  const emergencyContact = user?.emergencyContact || "N/A";
+  const emergencyContact2 = user?.emergencyContact2 || "N/A";
   const reportPeriod = formatReportPeriod(crises || []);
   const symptomCounts: Record<string, number> = {};
   const crisisTypes: Record<string, number> = {};
@@ -112,6 +129,9 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
   const recoveryCounts: Record<string, number> = {};
   const postStateCounts: Record<string, number> = {};
   const auraSymptomCounts: Record<string, number> = {};
+  const medicinesUsed = user?.medicines?.map((m) => m.name).join(", ") || "N/A";
+  const allergies = user?.allergies?.join(", ") || "N/A";
+  const anyOtherDisease = getAnyOtherDisease(user?.medicines || null);
 
   let totalDuration = 0;
   let countedCrises = 0;
@@ -258,10 +278,19 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
         <p><strong>Nome:</strong> ${user?.firstName || ""} ${
           user?.lastName || ""
         }</p>
-        <p><strong>Idade:</strong> ${age}</p>
-        <p><strong>Gênero:</strong> ${user?.gender || "N/A"}</p>
-        <p><strong>Diagnóstico:</strong> ${user?.diagnostic || "N/A"}</p>
-      `
+        <p><strong>Data de nascimento:</strong> ${birthDate}</p>
+        <p><strong>Contato de emergência 1:</strong> ${emergencyContact}</p>
+        <p><strong>Contato de emergência 2:</strong> ${emergencyContact2}</p>
+        <p><strong>Contato de emergência 2:</strong> ${emergencyContact2}</p>
+        <p><strong>Tipo de crise ou síndrome epiléptica:</strong> ${
+          user?.diagnostic || "N/A"
+        }</p>
+        <p><strong>Em uso de:</strong> ${medicinesUsed}</p>
+        <p><strong>NÃO USAR:</strong> ${allergies}</p>
+        <p><strong>Alguma outra doença?:</strong> ${anyOtherDisease.join(
+          ", "
+        )}</p>
+        `
       )}
 
       ${formatHTMLSection(

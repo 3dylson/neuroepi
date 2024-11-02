@@ -394,7 +394,7 @@ const CriseFormScreen: React.FC = () => {
                 onPress={() => setShowDatePicker(true)}
                 style={styles.button}
               >
-                Hora da Crise
+                Hora
               </Button>
 
               <Button
@@ -402,7 +402,7 @@ const CriseFormScreen: React.FC = () => {
                 onPress={() => setShowAndroidCalender(true)}
                 style={styles.button}
               >
-                Data da Crise
+                Data
               </Button>
             </View>
           )}
