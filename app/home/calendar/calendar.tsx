@@ -163,6 +163,11 @@ export default class CalendarScreen extends Component<State> {
         rowHasChanged={this.rowHasChanged}
         showClosingKnob={true}
         onDayPress={this.onDayPress}
+        renderKnob={() => (
+          <View style={styles.knob}>
+            <View style={styles.knobIcon} />
+          </View>
+        )}
       />
     );
   }
@@ -246,5 +251,24 @@ const styles = StyleSheet.create({
     height: 15,
     flex: 1,
     paddingTop: 30,
+  },
+  knob: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderRadius: 15,
+    backgroundColor: "#ccc",
+    flexDirection: "column", // Stack icon and text vertically
+  },
+  knobIcon: {
+    width: 30,
+    height: 5,
+    backgroundColor: "#006C50",
+    borderRadius: 2.5,
+    marginBottom: 5, // Add space between icon and text
+  },
+  knobText: {
+    fontSize: 12,
+    color: "#888",
   },
 });
