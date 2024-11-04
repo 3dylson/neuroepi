@@ -255,12 +255,12 @@ const BottomSheetAddMedicineScreen: React.FC<
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.keyboardAvoidingView}
     >
       <ScrollView
         contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.header}>
@@ -273,6 +273,8 @@ const BottomSheetAddMedicineScreen: React.FC<
 
         <TextInput
           label="Nome"
+          returnKeyType="done"
+          blurOnSubmit={true}
           value={formState.name}
           onChangeText={(text) => handleInputChange("name", text)}
           left={<TextInput.Icon icon="pill" />}
@@ -296,6 +298,8 @@ const BottomSheetAddMedicineScreen: React.FC<
         {formState.isForEpilepsy === false && (
           <TextInput
             label="Este medicamento está relacionado com"
+            returnKeyType="done"
+            blurOnSubmit={true}
             value={formState.relatedMedication}
             onChangeText={(text) =>
               handleInputChange("relatedMedication", text)
@@ -311,6 +315,8 @@ const BottomSheetAddMedicineScreen: React.FC<
             value={formState.dose}
             onChangeText={(text) => handleInputChange("dose", text)}
             mode="outlined"
+            returnKeyType="done"
+            blurOnSubmit={true}
             style={styles.doseInput}
             keyboardType="numeric"
           />
@@ -459,6 +465,7 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 16,
+    zIndex: 1,
   },
   radioGroup: {
     flexDirection: "row",
