@@ -255,7 +255,7 @@ const BottomSheetAddMedicineScreen: React.FC<
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "height" : undefined}
       style={styles.keyboardAvoidingView}
     >
       <ScrollView
