@@ -49,7 +49,7 @@ function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
     .map((m) => m.relatedMedication);
 }
 
-/// Helper function to format a summary of crises in HTML format with additional insights
+/// Helper function to format a summary of crises in HTML format with additional insights and charts
 function formatCrisesList(crises: Crisis[] | null): string {
   if (!crises || crises.length === 0) return "<p>Nenhuma crise registrada.</p>";
 
@@ -107,30 +107,44 @@ function formatCrisesList(crises: Crisis[] | null): string {
     ["N/A", 0]
   )[0];
 
-  // Generate HTML summary
+  // Create QuickChart URL for a bar chart representing time of day distribution
+  const quickChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "bar",
+      data: {
+        labels: ["Manhã", "Tarde", "Noite", "Madrugada"],
+        datasets: [
+          {
+            label: "Distribuição por Período do Dia",
+            data: [
+              timeOfDayCounts.morning,
+              timeOfDayCounts.afternoon,
+              timeOfDayCounts.evening,
+              timeOfDayCounts.night,
+            ],
+            backgroundColor: ["#FFA07A", "#20B2AA", "#778899", "#DAA520"],
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true },
+        },
+      },
+    })
+  )}`;
+
+  // Generate HTML summary with chart
   return `
     <div class="crisis-summary">
       <p><strong>Total de Crises Registradas:</strong> ${totalCrises}</p>
       <p><strong>Dias desde a Última Crise:</strong> ${daysSinceLastCrisis} dias</p>
 
       <h4>Distribuição por Período do Dia</h4>
-      <p>Manhã: ${((timeOfDayCounts.morning / totalCrises) * 100).toFixed(
-        1
-      )}%</p>
-      <p>Tarde: ${((timeOfDayCounts.afternoon / totalCrises) * 100).toFixed(
-        1
-      )}%</p>
-      <p>Noite: ${((timeOfDayCounts.evening / totalCrises) * 100).toFixed(
-        1
-      )}%</p>
-      <p>Madrugada: ${((timeOfDayCounts.night / totalCrises) * 100).toFixed(
-        1
-      )}%</p>
+      <img src="${quickChartUrl}" alt="Distribuição por Período do Dia" />
 
       <h4>Outras Informações</h4>
-      <p><strong>Variedade de Sintomas:</strong> ${
-        symptomVariety.size
-      } tipos de sintomas relatados</p>
+      <p><strong>Variedade de Sintomas:</strong> ${symptomVariety.size} tipos de sintomas relatados</p>
       <p><strong>Atividade Mais Comum Antes da Crise:</strong> ${mostCommonContext}</p>
     </div>
   `;
@@ -298,7 +312,86 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
     selfHarmPercentage: ((selfHarmCount / crisesLength) * 100).toFixed(1),
   };
 
-  // HTML Template
+  // QuickChart URLs for each chart
+  const intensityChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "pie",
+      data: {
+        labels: Object.keys(intensityCounts),
+        datasets: [
+          {
+            data: Object.values(intensityCounts),
+            backgroundColor: ["#ff9999", "#66b3ff", "#99ff99", "#ffcc99"],
+          },
+        ],
+      },
+    })
+  )}`;
+
+  const symptomsChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "bar",
+      data: {
+        labels: Object.keys(symptomCounts),
+        datasets: [
+          { data: Object.values(symptomCounts), backgroundColor: "#36a2eb" },
+        ],
+      },
+      options: { indexAxis: "y" },
+    })
+  )}`;
+
+  const manifestationChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "doughnut",
+      data: {
+        labels: Object.keys(crisisTypes),
+        datasets: [
+          {
+            data: Object.values(crisisTypes),
+            backgroundColor: ["#ff6384", "#36a2eb", "#cc65fe", "#ffce56"],
+          },
+        ],
+      },
+    })
+  )}`;
+
+  const recoveryChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "horizontalBar",
+      data: {
+        labels: Object.keys(recoveryCounts) as string[],
+        datasets: [
+          { data: Object.values(recoveryCounts), backgroundColor: "#ffcc56" },
+        ],
+      },
+    })
+  )}`;
+
+  const relatedFactorsChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "radar",
+      data: {
+        labels: ["Medicação", "Sono Ruim", "Álcool", "Estresse", "Menstruação"],
+        datasets: [
+          {
+            label: "Fatores Relacionados",
+            data: [
+              factors.tookMedicationPercentage,
+              factors.poorSleepPercentage,
+              factors.alcoholPercentage,
+              factors.emotionalStressPercentage,
+              factors.preMenstrualPercentage,
+            ],
+            backgroundColor: "rgba(34, 202, 236, .2)",
+            borderColor: "rgba(34, 202, 236, 1)",
+          },
+        ],
+      },
+    })
+  )}`;
+
+  // HTML Template with embedded charts
   return `
   <html>
     <head><style>${cssStyles()}</style></head>
@@ -310,7 +403,7 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
       ${formatHTMLSection(
         "Informações do Paciente",
         `
-        <p><strong>Nome:</strong> ${firstName || ""} ${lastName || ""}</p>
+        <p><strong>Nome:</strong> ${firstName} ${lastName}</p>
         <p><strong>Data de nascimento:</strong> ${formattedBirthDate}</p>
         <p><strong>Contato de emergência 1:</strong> ${
           emergencyContact || "N/A"
@@ -338,51 +431,21 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
         "Resumo das Crises",
         `
         <p><strong>Duração Média das Crises:</strong> ${avgDuration} minutos</p>
-        <p><strong>Manifestação das Crises:</strong> ${
-          distributions.crisisManifestations
-        }</p>
-        <p><strong>Distribuição da Intensidade das Crises:</strong> ${
-          distributions.intensityDistribution
-        }</p>
-        <p><strong>Tempo de Recuperação:</strong> ${
-          distributions.recoveryDistribution
-        }</p>
-        <p><strong>Estado Pós-Crise:</strong> ${
-          distributions.postStateDistribution
-        }</p>
-        <p><strong>Sintomas de Aura Mais Frequentes:</strong> ${
-          distributions.auraSymptomDistribution || "Nenhum"
-        }</p>
-        
-        <h3>Fatores Relacionados</h3>
-        <p><strong>Relação com a Tomada de Medicamentos:</strong> ${
-          factors.tookMedicationPercentage
-        }% das crises ocorreram sem medicação de controle nas 24-48 horas anteriores.</p>
-        <p><strong>Relação com Menstruação:</strong> ${
-          factors.preMenstrualPercentage
-        }% das crises ocorreram até três dias antes do ciclo menstrual, e ${
-          factors.noMenstrualRelationPercentage
-        }% não têm relação com o ciclo menstrual.</p>
 
-        <h3>Fatores Associados às Crises</h3>
-        <p><strong>Alimentos Diferentes:</strong> ${
-          factors.foodVarietyPercentage
-        }% das crises associadas a alimentos variados.</p>
-        <p><strong>Noite de Sono:</strong> ${
-          factors.poorSleepPercentage
-        }% das crises associadas a sono ruim.</p>
-        <p><strong>Consumo de Álcool:</strong> ${
-          factors.alcoholPercentage
-        }% das crises associadas ao consumo de álcool.</p>
-        <p><strong>Estresse Emocional:</strong> ${
-          factors.emotionalStressPercentage
-        }% das crises associadas a estresse ou preocupação.</p>
-        <p><strong>Uso de Substâncias Ilícitas:</strong> ${
-          factors.substanceUsePercentage
-        }% das crises associadas ao uso de substâncias ilícitas.</p>
-        <p><strong>Autolesão:</strong> ${
-          factors.selfHarmPercentage
-        }% das crises relatam autolesão.</p>
+        <h4>Distribuição da Intensidade das Crises</h4>
+        <img src="${intensityChartUrl}" alt="Distribuição da Intensidade das Crises" />
+
+        <h4>Sintomas Mais Frequentes</h4>
+        <img src="${symptomsChartUrl}" alt="Sintomas Mais Frequentes" />
+
+        <h4>Tipos de Crises</h4>
+        <img src="${manifestationChartUrl}" alt="Tipos de Crises" />
+
+        <h4>Tempo de Recuperação</h4>
+        <img src="${recoveryChartUrl}" alt="Tempo de Recuperação" />
+
+        <h4>Fatores Relacionados às Crises</h4>
+        <img src="${relatedFactorsChartUrl}" alt="Fatores Relacionados às Crises" />
       `
       )}
     </body>
