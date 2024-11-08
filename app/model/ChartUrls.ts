@@ -4,4 +4,5 @@ export interface ChartsUrls {
   manifestationChartUrl: string;
   recoveryChartUrl: string;
   relatedFactorsChartUrl: string;
+  postStateChartUrl: string;
 }

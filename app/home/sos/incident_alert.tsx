@@ -1,13 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Dimensions,
-  Button,
-  Image,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
@@ -16,14 +8,12 @@ import Chroma from "chroma-js";
 import * as Location from "expo-location"; // Use expo-location for location services
 import { User } from "@/app/model/User";
 import * as Linking from "expo-linking";
-import { generateAndOpenPDF, generatePDF } from "@/app/utils/PdfUtils";
+import { generatePDF } from "@/app/utils/PdfUtils";
 import * as FileSystem from "expo-file-system";
 import DateRangePicker from "@/components/DateRangePicker";
 import * as IntentLauncher from "expo-intent-launcher";
 import { router } from "expo-router";
 import { isIOS } from "@/app/utils/Utils";
-import ViewShot, { captureRef } from "react-native-view-shot";
-import { BarChart, LineChart } from "react-native-chart-kit";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -217,6 +207,7 @@ const IncidentAlertScreen: React.FC = () => {
       <DateRangePicker
         isVisible={showCalendar}
         onVisibilityChange={setShowCalendar}
+        maximumDate={new Date()}
         onDateSelected={async (startDate, endDate) => {
           await handleDateSelection(startDate, endDate);
         }}

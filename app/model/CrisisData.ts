@@ -18,4 +18,5 @@ export interface CrisisData {
   totalDuration: number;
   countedCrises: number;
   avgDuration: string;
+  recentChangeOnMedication: number;
 }

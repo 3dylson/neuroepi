@@ -6,12 +6,14 @@ interface DateRangePickerProps {
   isVisible: boolean; // Control visibility from the parent
   onVisibilityChange: (visible: boolean) => void; // Callback to change visibility
   onDateSelected: (startDate?: string, endDate?: string) => void; // Callback to return selected dates
+  maximumDate?: Date; // Optional maximum date
 }
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
   isVisible,
   onVisibilityChange,
   onDateSelected,
+  maximumDate,
 }) => {
   const [startDate, setStartDate] = useState<DateData | undefined>(undefined);
   const [endDate, setEndDate] = useState<DateData | undefined>(undefined);
@@ -87,6 +89,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             onDayPress={onDayPress}
             markedDates={markedDates}
             markingType={"period"}
+            maxDate={maximumDate} // Set the maximum date
           />
           {startDate && (
             <Text style={styles.dateText}>

@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -22,14 +21,10 @@ import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 import { generateId, isAndroid, isIOS } from "../utils/Utils";
 import { DoseFrequency } from "@/constants/DoseFrequency";
 import { Medicine } from "../model/Medicine";
-import * as Notifications from "expo-notifications";
 import {
-  getDefaultCalendarId,
-  getNextNotificationDates,
   requestCalendarPermission,
+  setNotificationAlarm,
 } from "../utils/NotifUtils";
-import * as Calendar from "expo-calendar";
-import * as Localization from "expo-localization";
 import { DateUtils } from "../utils/TimeUtils";
 
 interface BottomSheetAddMedicineScreenProps {
@@ -62,16 +57,6 @@ const BottomSheetAddMedicineScreen: React.FC<
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleKeyPress = (e: any) => {
-    console.log("Key pressed:", e.nativeEvent.key);
-    // Allow line breaks with Shift + Enter
-    if (e.nativeEvent.key === "Enter" && !e.nativeEvent.shiftKey) {
-      e.preventDefault(); // Prevent new line insertion
-      Keyboard.dismiss(); // Dismiss the keyboard
-      // You can also handle any submission logic here if needed
-    }
-  };
-
   const handleAlarmSwitchChange = async (value: boolean) => {
     const calendarPermissionGranted = await requestCalendarPermission();
     console.log("Calendar permission granted:", calendarPermissionGranted);
@@ -92,59 +77,6 @@ const BottomSheetAddMedicineScreen: React.FC<
     console.log("Updated times:", updatedTimes);
     setTimeList(updatedTimes);
   };
-
-  async function setNotificationAlarm(newMedicine: Medicine) {
-    if (newMedicine.isAlarmSet) {
-      const calendarPermissionGranted = await requestCalendarPermission();
-
-      if (calendarPermissionGranted) {
-        const notificationDates = getNextNotificationDates(
-          newMedicine.times,
-          newMedicine.frequency
-        );
-
-        notificationDates.forEach(async (notificationDate) => {
-          // Schedule notifications
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: `Hora de tomar seu remédio!`,
-              body: `Não se esqueça de tomar seu remédio: ${newMedicine.name}`,
-              data: { medicineId: newMedicine.id },
-            },
-            trigger: {
-              date: notificationDate,
-            },
-          });
-
-          // Create calendar event
-          const calendarId = await getDefaultCalendarId(); // Get the user's default calendar ID
-
-          if (calendarId) {
-            const deviceTimeZone = Localization.timezone;
-            console.log("Device time zone:", deviceTimeZone);
-            await Calendar.createEventAsync(calendarId, {
-              title: `Tome seu remédio: ${newMedicine.name}`,
-              startDate: notificationDate,
-              endDate: new Date(notificationDate.getTime() + 30 * 60 * 1000), // Assume a 30-minute event
-              timeZone: deviceTimeZone, // Adjust as needed for your time zone
-              notes: newMedicine.notes,
-            });
-
-            console.log(
-              "Calendar event added for medicine:",
-              newMedicine.name,
-              "at",
-              notificationDate
-            );
-          } else {
-            console.log("Default calendar ID not found");
-          }
-        });
-      } else {
-        console.log("Notification or calendar permissions not granted");
-      }
-    }
-  }
 
   const addTimeInput = () => {
     if (timeList[timeList.length - 1] !== "") {
@@ -261,7 +193,6 @@ const BottomSheetAddMedicineScreen: React.FC<
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="always"
-        contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.header}>
           <IconButton icon="close" onPress={onClose} />
@@ -413,13 +344,6 @@ const BottomSheetAddMedicineScreen: React.FC<
           multiline={true}
           onChangeText={(text) => handleInputChange("notes", text)}
           mode="outlined"
-          onKeyPress={handleKeyPress} // Capture key presses
-          onSubmitEditing={() => {
-            // Handle the done action
-            Keyboard.dismiss(); // To dismiss the keyboard
-          }}
-          returnKeyType="done" // This should show "Done" on the keyboard
-          blurOnSubmit={true} // Blurs the TextInput on submit
           style={styles.notesInput}
         />
 

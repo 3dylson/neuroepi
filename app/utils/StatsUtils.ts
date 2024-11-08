@@ -48,7 +48,8 @@ export function countPostStateAndFactors(crisis: Crisis, counters: any) {
       (counters.postStateCounts[state] || 0) + 1;
   });
 
-  if (crisis.tookMedication) counters.tookMedicationCount++;
+  // TODO change name
+  if (crisis.tookMedication == false) counters.tookMedicationCount++;
   if (
     crisis.menstruationOrPregnancy === MenstruationOrPregnancy.Pre3Menstruation
   )
@@ -67,6 +68,7 @@ export function countPostStateAndFactors(crisis: Crisis, counters: any) {
   if (crisis.emotionalStress !== "Não") counters.emotionalStressCount++;
   if (crisis.substanceUse) counters.substanceUseCount++;
   if (crisis.selfHarm) counters.selfHarmCount++;
+  if (crisis.recentChangeOnMedication) counters.recentChangeOnMedication++;
 }
 
 // Helper function to calculate average duration
@@ -210,6 +212,7 @@ function initializeCounters(): CrisisData {
     totalDuration: 0,
     countedCrises: 0,
     avgDuration: "N/A",
+    recentChangeOnMedication: 0,
   };
 }
 
@@ -219,6 +222,6 @@ export function normalizeToPercentages(
 ): number[] {
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
   return Object.values(counts).map((count) =>
-    total > 0 ? (count / total) * 100 : 0
+    total > 0 ? Math.round((count / total) * 100) : 0
   );
 }

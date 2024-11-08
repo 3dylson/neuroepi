@@ -5,26 +5,54 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; // To add gradient to SOS button
-import { IconButton, useTheme } from "react-native-paper";
+import { IconButton, Button, useTheme } from "react-native-paper";
 import { router, useNavigation } from "expo-router";
+import { generatePDF } from "../utils/PdfUtils";
+import * as IntentLauncher from "expo-intent-launcher";
+import * as FileSystem from "expo-file-system";
+import DateRangePicker from "@/components/DateRangePicker";
+import { isIOS } from "../utils/Utils";
 
 const HomeLayout: React.FC = () => {
   const { colors } = useTheme(); // Using colors from theme for flexibility
   const [scale] = useState(new Animated.Value(1)); // Scale for SOS button press animation
   const navigation = useNavigation();
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
 
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <IconButton
-          icon="account-circle"
-          onPress={() => router.push("/home/profile/profile")}
-        />
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Button onPress={() => openExportAlert()}>Partilhar relatório</Button>
+          <IconButton
+            icon="account-circle"
+            onPress={() => router.push("/home/profile/profile")}
+          />
+        </View>
       ),
     });
   }, [navigation]);
+
+  const openExportAlert = () => {
+    Alert.alert(
+      "Exportar Relatório",
+      "Deseja exportar um relatório das crises?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Exportar",
+          style: "default",
+          onPress: () => setShowCalendar(true),
+        },
+      ]
+    );
+  };
 
   // Function to handle press animation
   const handlePressIn = () => {
@@ -43,8 +71,41 @@ const HomeLayout: React.FC = () => {
     }).start();
   };
 
+  async function handleDateSelection(
+    startDate: string | undefined,
+    endDate: string | undefined
+  ) {
+    console.log("Selected dates:", startDate, endDate);
+    if (startDate && endDate) {
+      let allDayEndDate = new Date(endDate);
+      allDayEndDate.setHours(23, 59, 59, 999);
+      let pdfPath = await generatePDF(new Date(startDate), allDayEndDate);
+      if (isIOS()) {
+        router.push({
+          pathname: "/home/sos/report_screen",
+          params: { pdfPath: pdfPath },
+        });
+      } else {
+        const contentUri = await FileSystem.getContentUriAsync(pdfPath);
+        await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+          data: contentUri,
+          flags: 1,
+          type: "application/pdf",
+        });
+      }
+    }
+  }
+
   return (
     <View style={styles.container}>
+      <DateRangePicker
+        isVisible={showCalendar}
+        onVisibilityChange={setShowCalendar}
+        maximumDate={new Date()}
+        onDateSelected={async (startDate, endDate) => {
+          await handleDateSelection(startDate, endDate);
+        }}
+      />
       <Text style={styles.headerText}>NEUROEPI</Text>
 
       {/* Top Grid */}
@@ -164,14 +225,19 @@ const styles = StyleSheet.create({
     elevation: 10, // Elevation for Android
   },
   sosText: {
-    fontSize: 34,
+    fontSize: 40, // Increased font size for more emphasis
     fontWeight: "bold",
     color: "#fff", // White text for contrast against gradient
+    textAlign: "center", // Center the text
+    textShadowColor: "#000", // Add shadow for better readability
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
   },
   sosSubText: {
     fontSize: 14,
     paddingHorizontal: 10, // Padding for better spacing
     color: "#fff", // Matching color for text consistency
+    textAlign: "center", // Center the text
   },
 });
 

@@ -21,6 +21,7 @@ import { DateUtils } from "@/app/utils/TimeUtils";
 
 // TODO: This should be done with Enums or Constants
 const CriseFormScreen: React.FC = () => {
+  const [isEditing, setIsEditing] = useState(false);
   const params = useLocalSearchParams(); // Get the params from router
   const navigation = useNavigation();
   const [crise, setCrise] = useState<Crisis | null>(null);
@@ -37,13 +38,14 @@ const CriseFormScreen: React.FC = () => {
   );
   const [whatWasDoing, setWhatWasDoing] = useState("");
   const [menstruationOrPregnancy, setMenstruationOrPregnancy] = useState("");
-  const [recentChangeOnMedication, setRecentChangeOnMedication] =
-    useState(false);
-  const [alcohol, setAlcohol] = useState(false);
+  const [recentChangeOnMedication, setRecentChangeOnMedication] = useState<
+    boolean | null
+  >(null);
+  const [alcohol, setAlcohol] = useState<boolean | null>(null);
   const [food, setFood] = useState("");
   const [emotionalStress, setEmotionalStress] = useState("");
-  const [substanceUse, setSubstanceUse] = useState(false);
-  const [selfHarm, setSelfHarm] = useState(false);
+  const [substanceUse, setSubstanceUse] = useState<boolean | null>(null);
+  const [selfHarm, setSelfHarm] = useState<boolean | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showAndroidCalender, setShowAndroidCalender] = useState(false);
   const [sleepStatus, setSleepStatus] = useState("");
@@ -129,6 +131,7 @@ const CriseFormScreen: React.FC = () => {
         const crises = await Crisis.getCrises();
         const foundCrise = crises?.find((c) => c.id === params.id);
         if (foundCrise) {
+          setIsEditing(true);
           console.log("Found Crise:", foundCrise);
           const date = foundCrise.dateTime
             ? new Date(foundCrise.dateTime)
@@ -149,7 +152,7 @@ const CriseFormScreen: React.FC = () => {
           );
           setPostState(postState || []);
           handleSetOtherPostState(foundCrise.postState || []);
-          setTookMedication(foundCrise.tookMedication || undefined);
+          setTookMedication(foundCrise.tookMedication);
           handleSetWhatWasDoing(foundCrise.whatWasDoing || "");
           setMenstruationOrPregnancy(foundCrise.menstruationOrPregnancy || "");
           setRecentChangeOnMedication(
@@ -304,6 +307,9 @@ const CriseFormScreen: React.FC = () => {
         .map((item) => item.trim())
         .filter((s) => s.trim() !== "")
     );
+
+    console.log("Sleep Status", sleepStatus);
+
     const newCrise = new Crisis({
       id: crise?.id || generateId(),
       dateTime,
@@ -316,11 +322,13 @@ const CriseFormScreen: React.FC = () => {
       tookMedication,
       whatWasDoing,
       menstruationOrPregnancy,
-      alcohol,
+      recentChangeOnMedication: recentChangeOnMedication ?? undefined,
+      alcohol: alcohol ?? undefined,
       food,
       emotionalStress,
-      substanceUse,
-      selfHarm,
+      substanceUse: substanceUse ?? undefined,
+      selfHarm: selfHarm ?? undefined,
+      sleepStatus: sleepStatus,
     });
 
     await Crisis.addOrUpdateCrise(newCrise);
@@ -488,22 +496,41 @@ const CriseFormScreen: React.FC = () => {
               status={
                 symptomsBefore.includes(symptom) ? "checked" : "unchecked"
               }
-              onPress={() =>
-                setSymptomsBefore((prev) =>
-                  prev.includes(symptom)
-                    ? prev.filter((s) => s !== symptom)
-                    : [...prev, symptom]
-                )
+              onPress={() => {
+                if (symptom === "Nenhum") {
+                  setSymptomsBefore(
+                    symptomsBefore.includes("Nenhum") ? [] : ["Nenhum"]
+                  );
+                } else {
+                  setSymptomsBefore((prev) => {
+                    if (prev.includes("Nenhum")) {
+                      return [symptom];
+                    }
+                    return prev.includes(symptom)
+                      ? prev.filter((s) => s !== symptom)
+                      : [...prev, symptom];
+                  });
+                }
+              }}
+              disabled={
+                symptomsBefore.includes("Nenhum") && symptom !== "Nenhum"
+              }
+              style={
+                symptomsBefore.includes("Nenhum") && symptom !== "Nenhum"
+                  ? styles.disabledCheckbox
+                  : undefined
               }
             />
           ))}
-          <TextInput
-            label="Outros"
-            value={othersAuraSymptoms}
-            onChangeText={setOthersAuraSymptoms}
-            mode="outlined"
-            style={styles.input}
-          />
+          {!symptomsBefore.includes("Nenhum") && (
+            <TextInput
+              label="Outros"
+              value={othersAuraSymptoms}
+              onChangeText={setOthersAuraSymptoms}
+              mode="outlined"
+              style={styles.input}
+            />
+          )}
         </Card.Content>
       </Card>
 
@@ -544,7 +571,7 @@ const CriseFormScreen: React.FC = () => {
         <Card.Content>
           <RadioButton.Group
             onValueChange={handleSetTookMedication}
-            value={tookMedication?.toString() || "null"}
+            value={(tookMedication ?? (isEditing ? "null" : "")).toString()}
           >
             <RadioButton.Item label="Sim" value="true" />
             <RadioButton.Item label="Não" value="false" />
@@ -633,7 +660,7 @@ const CriseFormScreen: React.FC = () => {
         <Card.Content>
           <RadioButton.Group
             onValueChange={handleSetRecentChangeOnMedication}
-            value={recentChangeOnMedication.toString()}
+            value={(recentChangeOnMedication ?? "").toString()}
           >
             <RadioButton.Item label="Sim" value="true" />
             <RadioButton.Item label="Não" value="false" />
@@ -661,7 +688,7 @@ const CriseFormScreen: React.FC = () => {
         <Card.Content>
           <RadioButton.Group
             onValueChange={handleSetAlcohol}
-            value={alcohol.toString()}
+            value={(alcohol ?? "").toString()}
           >
             <RadioButton.Item label="Sim" value="true" />
             <RadioButton.Item label="Não" value="false" />
@@ -735,7 +762,7 @@ const CriseFormScreen: React.FC = () => {
         <Card.Content>
           <RadioButton.Group
             onValueChange={handleSetSubstanceUse}
-            value={substanceUse.toString()}
+            value={(substanceUse ?? "").toString()}
           >
             <RadioButton.Item label="Sim" value="true" />
             <RadioButton.Item label="Não" value="false" />
@@ -749,7 +776,7 @@ const CriseFormScreen: React.FC = () => {
         <Card.Content>
           <RadioButton.Group
             onValueChange={handleSetSelfHarm}
-            value={selfHarm.toString()}
+            value={(selfHarm ?? "").toString()}
           >
             <RadioButton.Item label="Sim" value="true" />
             <RadioButton.Item label="Não" value="false" />
@@ -799,6 +826,9 @@ const styles = StyleSheet.create({
   button: {
     flex: 1, // Optional: make buttons take equal space
     marginHorizontal: 5, // Space between buttons
+  },
+  disabledCheckbox: {
+    opacity: 0.5, // Make the checkbox look disabled by reducing opacity
   },
 });
 

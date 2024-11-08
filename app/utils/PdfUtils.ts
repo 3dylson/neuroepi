@@ -7,38 +7,22 @@ import { Platform } from "react-native";
 import * as Sharing from "expo-sharing";
 import { DateUtils } from "./TimeUtils";
 import { Medicine } from "../model/Medicine";
-import { generateCharts } from "./ChartUtils";
+import {
+  chartConfigSingleColor,
+  chartConfigWithColor,
+  generateCharts,
+  generateColorArray,
+} from "./ChartUtils";
 import {
   analyzeCrisisData,
   calculateRelatedFactors,
   generatePercentageDistributions,
 } from "./StatsUtils";
+import { formatReportPeriod } from "./Utils";
 
 // Helper function to format HTML content sections
 function formatHTMLSection(title: string, content: string) {
   return `<div class="section"><h2>${title}</h2>${content}</div>`;
-}
-
-// Helper to get age from birth date
-function calculateAge(birthDate: Date | undefined): string {
-  return birthDate
-    ? `${new Date().getFullYear() - birthDate.getFullYear()}`
-    : "N/A";
-}
-
-// Helper to format crisis date range
-function formatReportPeriod(crises: Crisis[]): string {
-  if (crises.length === 0) return "Período indisponível";
-
-  const start = new Date(
-    Math.min(
-      ...crises.map((c) =>
-        c.dateTime ? new Date(c.dateTime).getTime() : Infinity
-      )
-    )
-  );
-  const end = new Date();
-  return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
 }
 
 function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
@@ -52,7 +36,7 @@ function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
 }
 
 /// Helper function to format a summary of crises in HTML format with additional insights and charts
-function formatCrisesList(crises: Crisis[] | null): string {
+function formatCrisesList(crises: Crisis[] | null, avgDuration: any): string {
   if (!crises || crises.length === 0) return "<p>Nenhuma crise registrada.</p>";
 
   const durationMapping = {
@@ -68,9 +52,11 @@ function formatCrisesList(crises: Crisis[] | null): string {
   let timeOfDayCounts = { morning: 0, afternoon: 0, evening: 0, night: 0 };
   let contextCounts: Record<string, number> = {};
 
+  // Analyze crises data
   crises.forEach((crisis) => {
-    // Record most recent crisis date
     const crisisDate = crisis.dateTime ? new Date(crisis.dateTime) : null;
+
+    // Record the most recent crisis date
     if (
       crisisDate &&
       (!mostRecentCrisisDate || crisisDate > mostRecentCrisisDate)
@@ -103,51 +89,49 @@ function formatCrisesList(crises: Crisis[] | null): string {
       )
     : "N/A";
 
-  // Get the most common context
-  const mostCommonContext = Object.entries(contextCounts).reduce(
-    (max, entry) => (entry[1] > max[1] ? entry : max),
-    ["N/A", 0]
-  )[0];
+  // Chart URLs
+  const timeOfDayChartUrl = chartConfigSingleColor(
+    "bar",
+    timeOfDayCounts,
+    "#FFA07A",
+    "Distribuição por Período do Dia",
+    ["Manhã", "Tarde", "Noite", "Madrugada"]
+  );
 
-  // Create QuickChart URL for a bar chart representing time of day distribution
-  const quickChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
-    JSON.stringify({
-      type: "bar",
-      data: {
-        labels: ["Manhã", "Tarde", "Noite", "Madrugada"],
-        datasets: [
-          {
-            label: "Distribuição por Período do Dia",
-            data: [
-              timeOfDayCounts.morning,
-              timeOfDayCounts.afternoon,
-              timeOfDayCounts.evening,
-              timeOfDayCounts.night,
-            ],
-            backgroundColor: ["#FFA07A", "#20B2AA", "#778899", "#DAA520"],
-          },
-        ],
-      },
-      options: {
-        scales: {
-          y: { beginAtZero: true },
-        },
-      },
-    })
-  )}`;
+  const contextLabels = Object.keys(contextCounts);
+  const contextValues = Object.values(contextCounts);
+  const contextChartUrl = chartConfigWithColor(
+    "doughnut",
+    contextCounts,
+    generateColorArray(
+      ["#FF4500", "#32CD32", "#1E90FF", "#FFD700", "#8A2BE2"],
+      contextLabels.length
+    ),
+    "Distribuição por Contexto Antes da Crise",
+    contextLabels
+  );
 
-  // Generate HTML summary with chart
+  // Generate HTML summary with charts
   return `
     <div class="crisis-summary">
       <p><strong>Total de Crises Registradas:</strong> ${totalCrises}</p>
+      <p><strong>Duração Média das Crises:</strong> ${avgDuration} minutos</p>
       <p><strong>Dias desde a Última Crise:</strong> ${daysSinceLastCrisis} dias</p>
-
-      <h4>Distribuição por Período do Dia</h4>
-      <img src="${quickChartUrl}" alt="Distribuição por Período do Dia" />
-
-      <h4>Outras Informações</h4>
-      <p><strong>Variedade de Sintomas:</strong> ${symptomVariety.size} tipos de sintomas relatados</p>
-      <p><strong>Atividade Mais Comum Antes da Crise:</strong> ${mostCommonContext}</p>
+      
+      <div class="charts-container">
+        <div class="chart-item">
+          <h4>Distribuição por Período do Dia</h4>
+          <img src="${timeOfDayChartUrl}" alt="Distribuição por Período do Dia" />
+        </div>
+        ${
+          contextChartUrl
+            ? `<div class="chart-item">
+                <h4>Distribuição por Contexto Antes da Crise</h4>
+                <img src="${contextChartUrl}" alt="Contexto Antes da Crise" />
+              </div>`
+            : "<p>Nenhum contexto registrado.</p>"
+        }
+      </div>
     </div>
   `;
 }
@@ -179,10 +163,10 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
       ${formatHTMLSection("Informações do Paciente", userData)}
       ${formatHTMLSection(
         "Informações das Crises",
-        `<ul>${formatCrisesList(crises)}</ul>`
+        `<ul>${formatCrisesList(crises, crisisData.avgDuration)}</ul>`
       )}
       ${formatHTMLSection(
-        "Resumo das Crises",
+        "",
         generateSummarySection(
           distributions,
           factors,
@@ -233,6 +217,7 @@ function getUserData(user: User): string {
 }
 
 // Helper function to structure the summary section
+// Helper function to structure the summary section with a 2x2 layout for charts
 function generateSummarySection(
   distributions: any,
   factors: any,
@@ -240,22 +225,32 @@ function generateSummarySection(
   charts: any
 ): string {
   return `
-    <p><strong>Duração Média das Crises:</strong> ${avgDuration} minutos</p>
-
-    <h4>Distribuição da Intensidade das Crises</h4>
-    <img src="${charts.intensityChartUrl}" alt="Distribuição da Intensidade das Crises" />
-
-    <h4>Sintomas Mais Frequentes</h4>
-    <img src="${charts.symptomsChartUrl}" alt="Sintomas Mais Frequentes" />
-
-    <h4>Tipos de Crises</h4>
-    <img src="${charts.manifestationChartUrl}" alt="Tipos de Crises" />
-
-    <h4>Tempo de Recuperação</h4>
-    <img src="${charts.recoveryChartUrl}" alt="Tempo de Recuperação" />
-
-    <h4>Fatores Relacionados às Crises</h4>
-    <img src="${charts.relatedFactorsChartUrl}" alt="Fatores Relacionados às Crises" />
+    <div class="charts-container">
+     <div class="chart-item">
+        <h4>Distribuição do Estado Pós Crises</h4>
+        <img src="${charts.postStateChartUrl}" alt="Distribuição do Estado Pós Crises" />
+      </div>
+      <div class="chart-item">
+        <h4>Distribuição da Intensidade das Crises</h4>
+        <img src="${charts.intensityChartUrl}" alt="Distribuição da Intensidade das Crises" />
+      </div>
+      <div class="chart-item">
+        <h4>Sintomas Mais Frequentes</h4>
+        <img src="${charts.symptomsChartUrl}" alt="Sintomas Mais Frequentes" />
+      </div>
+      <div class="chart-item">
+        <h4>Tipos de Crises</h4>
+        <img src="${charts.manifestationChartUrl}" alt="Tipos de Crises" />
+      </div>
+      <div class="chart-item">
+        <h4>Tempo de Recuperação</h4>
+        <img src="${charts.recoveryChartUrl}" alt="Tempo de Recuperação" />
+      </div>
+      <div class="chart-item">
+        <h4>Fatores Relacionados às Crises</h4>
+        <img src="${charts.relatedFactorsChartUrl}" alt="Fatores Relacionados às Crises" />
+      </div>
+    </div>
   `;
 }
 
@@ -266,6 +261,28 @@ function cssStyles(): string {
     p, li { font-size: 14px; line-height: 1.6; }
     .header { text-align: center; margin-bottom: 20px; }
     .section { margin: 20px 0; }
+    .charts-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .chart-item {
+      flex: 1 1 45%;
+      max-width: 45%;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .chart-item img {
+      width: 100%;
+      height: auto;
+      max-width: 400px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
     .crisis-entry {
       border: 1px solid #ddd;
       border-radius: 5px;
