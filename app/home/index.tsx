@@ -16,6 +16,8 @@ import * as IntentLauncher from "expo-intent-launcher";
 import * as FileSystem from "expo-file-system";
 import DateRangePicker from "@/components/DateRangePicker";
 import { isIOS } from "../utils/Utils";
+import { head } from "lodash";
+import { Colors } from "@/constants/Colors";
 
 const HomeLayout: React.FC = () => {
   const { colors } = useTheme(); // Using colors from theme for flexibility
@@ -30,6 +32,17 @@ const HomeLayout: React.FC = () => {
           <IconButton
             icon="account-circle"
             onPress={() => router.push("/home/profile/profile")}
+            size={30}
+            //iconColor={Colors.light.onPrimaryContainer}
+          />
+        </View>
+      ),
+      headerLeft: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <IconButton
+            icon="cog"
+            onPress={() => router.push("/home/profile/app_config")}
+            size={30}
           />
         </View>
       ),
@@ -88,71 +101,79 @@ const HomeLayout: React.FC = () => {
           await handleDateSelection(startDate, endDate);
         }}
       />
-      <Text style={styles.headerText}>Neuroepi</Text>
 
-      {/* Top Grid */}
-      <View style={styles.gridContainer}>
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => router.push("/home/crise/crisis_list")}
-        >
-          <Text style={styles.cardEmoji}>🚑</Text>
-          <Text style={styles.cardText}>Detalhamento de Crises</Text>
-        </TouchableOpacity>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.headerText}>Neuroepi</Text>
 
-        <TouchableOpacity
-          onPress={() => router.push("/home/calendar/calendar")}
-          style={styles.card}
-        >
-          <Text style={styles.cardEmoji}>📅</Text>
-          <Text style={styles.cardText}>Calendário</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push("/home/educate/educate")}
-          style={styles.cardSmall}
-        >
-          <Text style={styles.cardEmojiSmall}>📚</Text>
-          <Text style={styles.cardTextSmall}>Informações Úteis</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push("/home/medicine/medicines")}
-          style={styles.cardSmall}
-        >
-          <Text style={styles.cardEmojiSmall}>💊</Text>
-          <Text style={styles.cardTextSmall}>Medicações em Uso</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setShowCalendar(true)}
-          style={styles.cardSmall}
-        >
-          <Text style={styles.cardEmojiSmall}>📋</Text>
-          <Text style={styles.cardTextSmall}>Enviar Relatório</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Animated SOS Button */}
-      <Animated.View style={{ transform: [{ scale }] }}>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          onPress={() => router.push("/home/sos/incident_alert")} // Add your SOS action here
-          style={styles.sosButtonContainer}
-        >
-          <LinearGradient
-            colors={["#6a11cb", "#2575fc"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.sosButton}
+        {/* Top Grid */}
+        <View style={styles.gridContainer}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push("/home/crise/crisis_list")}
           >
-            <Text style={styles.sosText}>SOS</Text>
-            <Text style={styles.sosSubText}>Avisar contato de emergência</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
+            <Text style={styles.cardEmoji}>🚑</Text>
+            <Text style={styles.cardText}>Detalhamento de Crises</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/home/calendar/calendar")}
+            style={styles.card}
+          >
+            <Text style={styles.cardEmoji}>📅</Text>
+            <Text style={styles.cardText}>Calendário</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/home/educate/educate")}
+            style={styles.cardSmall}
+          >
+            <Text style={styles.cardEmojiSmall}>📚</Text>
+            <Text style={styles.cardTextSmall}>Informações Úteis</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/home/medicine/medicines")}
+            style={styles.cardSmall}
+          >
+            <Text style={styles.cardEmojiSmall}>💊</Text>
+            <Text style={styles.cardTextSmall}>Medicações em Uso</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setShowCalendar(true)}
+            style={styles.cardSmall}
+          >
+            <Text style={styles.cardEmojiSmall}>📋</Text>
+            <Text style={styles.cardTextSmall}>Enviar Relatório</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Animated SOS Button */}
+        <Animated.View style={{ transform: [{ scale }] }}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={() => router.push("/home/sos/incident_alert")}
+            style={styles.sosButtonContainer}
+          >
+            <LinearGradient
+              colors={["#6a11cb", "#2575fc"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.sosButton}
+            >
+              <Text style={styles.sosText}>SOS</Text>
+              <Text style={styles.sosSubText}>
+                Avisar contato de emergência
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
     </View>
   );
 };
@@ -160,16 +181,19 @@ const HomeLayout: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9f9f9", // Lighter background for a modern look
+    backgroundColor: "#f9f9f9",
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: "center",
-    justifyContent: "space-between", // More balanced layout
+    justifyContent: "space-between",
     paddingVertical: 40,
   },
   headerText: {
     fontSize: 40,
     fontWeight: "700",
     marginBottom: 10,
-    color: "#333", // Darker color for better contrast
+    color: "#333",
   },
   gridContainer: {
     flexDirection: "row",
@@ -177,42 +201,40 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
-    backgroundColor: "#ffe5e5", // Softer pink for the cards
-    width: 150, // Adjust based on design
+    backgroundColor: "#ffe5e5",
+    width: 150,
     height: 150,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    margin: 15, // Increased margin for better spacing
-    shadowColor: "#000", // Add shadow for a modern look
+    margin: 15,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 8, // Shadow for Android
+    elevation: 8,
   },
   cardSmall: {
-    backgroundColor: "#ffe5e5", // Softer pink for the cards
-    width: 100, // Adjust based on design
+    backgroundColor: "#ffe5e5",
+    width: 100,
     height: 100,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    margin: 15, // Increased margin for better spacing
-    shadowColor: "#000", // Add shadow for a modern look
+    margin: 15,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 8, // Shadow for Android
+    elevation: 8,
   },
-
   cardEmoji: {
-    fontSize: 55, // Larger emoji for a modern feel
-    marginBottom: 10, // Space between the emoji and text
+    fontSize: 55,
+    marginBottom: 10,
   },
-
   cardEmojiSmall: {
-    fontSize: 30, // Larger emoji for a modern feel
-    marginBottom: 10, // Space between the emoji and text
+    fontSize: 30,
+    marginBottom: 10,
   },
   cardText: {
     fontSize: 18,
@@ -229,7 +251,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   sosButtonContainer: {
-    marginBottom: 30, // Bottom padding for the SOS button
+    marginBottom: 30,
   },
   sosButton: {
     width: 190,
@@ -237,26 +259,26 @@ const styles = StyleSheet.create({
     borderRadius: 110,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#FF5F6D", // Red glow
+    shadowColor: "#FF5F6D",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
-    elevation: 10, // Elevation for Android
+    elevation: 10,
   },
   sosText: {
-    fontSize: 40, // Increased font size for more emphasis
+    fontSize: 40,
     fontWeight: "bold",
-    color: "#fff", // White text for contrast against gradient
-    textAlign: "center", // Center the text
-    textShadowColor: "#000", // Add shadow for better readability
+    color: "#fff",
+    textAlign: "center",
+    textShadowColor: "#000",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 5,
   },
   sosSubText: {
     fontSize: 14,
-    paddingHorizontal: 10, // Padding for better spacing
-    color: "#fff", // Matching color for text consistency
-    textAlign: "center", // Center the text
+    paddingHorizontal: 10,
+    color: "#fff",
+    textAlign: "center",
   },
 });
 

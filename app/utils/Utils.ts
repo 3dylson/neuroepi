@@ -34,5 +34,5 @@ export function formatReportPeriod(crises: Crisis[]): string {
     )
   );
   const end = new Date();
-  return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+  return `${start.toLocaleDateString()} a ${end.toLocaleDateString()}`;
 }

@@ -138,10 +138,6 @@ export function generateRelatedFactorsChartUrl(data: CrisisData): string {
         ],
       },
       options: {
-        title: {
-          display: true,
-          text: "Valores em percentagem",
-        },
         plugins: {
           datalabels: {
             display: true,
@@ -228,10 +224,6 @@ export function chartConfigWithColor(
         ],
       },
       options: {
-        title: {
-          display: true,
-          text: "Valores em percentagem",
-        },
         plugins: {
           datalabels: {
             display: true,
@@ -304,10 +296,6 @@ export function chartConfigSingleColor(
         ],
       },
       options: {
-        title: {
-          display: true,
-          text: "Valores em percentagem",
-        },
         plugins: {
           datalabels: {
             display: true,

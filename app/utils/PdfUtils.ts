@@ -52,6 +52,8 @@ function formatCrisesList(crises: Crisis[] | null, avgDuration: any): string {
   let timeOfDayCounts = { morning: 0, afternoon: 0, evening: 0, night: 0 };
   let contextCounts: Record<string, number> = {};
 
+  const chartPeriod = formatReportPeriod(crises || []);
+
   // Analyze crises data
   crises.forEach((crisis) => {
     const crisisDate = crisis.dateTime ? new Date(crisis.dateTime) : null;
@@ -114,7 +116,7 @@ function formatCrisesList(crises: Crisis[] | null, avgDuration: any): string {
   // Generate HTML summary with charts
   return `
     <div class="crisis-summary">
-      <p><strong>Total de Crises Registradas:</strong> ${totalCrises}</p>
+      <p><strong>Total de Crises Registradas no período de ${chartPeriod}:</strong> ${totalCrises}</p>
       <p><strong>Duração Média das Crises:</strong> ${avgDuration} minutos</p>
       <p><strong>Dias desde a Última Crise:</strong> ${daysSinceLastCrisis} dias</p>
       
@@ -126,7 +128,7 @@ function formatCrisesList(crises: Crisis[] | null, avgDuration: any): string {
         ${
           contextChartUrl
             ? `<div class="chart-item">
-                <h4>Distribuição por Contexto Antes da Crise</h4>
+                <h4>Atividades que Precederam à Crise</h4>
                 <img src="${contextChartUrl}" alt="Contexto Antes da Crise" />
               </div>`
             : "<p>Nenhum contexto registrado.</p>"
@@ -149,6 +151,7 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
   );
   const factors = calculateRelatedFactors(crisisData, crises?.length || 0);
   const charts = generateCharts(crisisData);
+  const chartPeriod = formatReportPeriod(crises || []);
 
   return `
   <html>
@@ -156,9 +159,7 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
     <body>
       <div class="header">
         <h1>Relatório Médico</h1>
-        <p><strong>Período do Relatório:</strong> ${formatReportPeriod(
-          crises || []
-        )}</p>
+        <p><strong>Período do Relatório:</strong> ${chartPeriod}</p>
       </div>
       ${formatHTMLSection("Informações do Paciente", userData)}
       ${formatHTMLSection(
@@ -183,6 +184,7 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
 function getUserData(user: User): string {
   const {
     birthDate,
+    phoneNumber,
     emergencyContact,
     emergencyContact2,
     firstName,
@@ -201,17 +203,16 @@ function getUserData(user: User): string {
   return `
     <p><strong>Nome:</strong> ${firstName} ${lastName}</p>
     <p><strong>Data de nascimento:</strong> ${formattedBirthDate}</p>
+    <p><strong>Contato de telefone:</strong> ${phoneNumber || "N/A"}</p>
     <p><strong>Contato de emergência 1:</strong> ${
       emergencyContact || "N/A"
     }</p>
     <p><strong>Contato de emergência 2:</strong> ${
       emergencyContact2 || "N/A"
     }</p>
-    <p><strong>Tipo de crise ou síndrome epiléptica:</strong> ${
-      diagnostic || "N/A"
-    }</p>
+    <p><strong>Diagnóstico:</strong> ${diagnostic || "N/A"}</p>
     <p><strong>Em uso de:</strong> ${medicinesUsed}</p>
-    <p><strong>NÃO USAR:</strong> ${allergiesList}</p>
+    <p><strong>Alergias:</strong> ${allergiesList}</p>
     <p><strong>Alguma outra doença?:</strong> ${otherDiseases}</p>
   `;
 }
@@ -235,7 +236,7 @@ function generateSummarySection(
         <img src="${charts.intensityChartUrl}" alt="Distribuição da Intensidade das Crises" />
       </div>
       <div class="chart-item">
-        <h4>Sintomas Mais Frequentes</h4>
+        <h4>Sintomas Antes da Crise (Auras)</h4>
         <img src="${charts.symptomsChartUrl}" alt="Sintomas Mais Frequentes" />
       </div>
       <div class="chart-item">
