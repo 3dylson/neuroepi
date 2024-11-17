@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
+  ScrollView,
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; // To add gradient to SOS button
@@ -26,7 +27,6 @@ const HomeLayout: React.FC = () => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Button onPress={() => openExportAlert()}>Partilhar relatório</Button>
           <IconButton
             icon="account-circle"
             onPress={() => router.push("/home/profile/profile")}
@@ -35,24 +35,6 @@ const HomeLayout: React.FC = () => {
       ),
     });
   }, [navigation]);
-
-  const openExportAlert = () => {
-    Alert.alert(
-      "Exportar Relatório",
-      "Deseja exportar um relatório das crises?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Exportar",
-          style: "default",
-          onPress: () => setShowCalendar(true),
-        },
-      ]
-    );
-  };
 
   // Function to handle press animation
   const handlePressIn = () => {
@@ -106,7 +88,7 @@ const HomeLayout: React.FC = () => {
           await handleDateSelection(startDate, endDate);
         }}
       />
-      <Text style={styles.headerText}>NEUROEPI</Text>
+      <Text style={styles.headerText}>Neuroepi</Text>
 
       {/* Top Grid */}
       <View style={styles.gridContainer}>
@@ -115,7 +97,7 @@ const HomeLayout: React.FC = () => {
           onPress={() => router.push("/home/crise/crisis_list")}
         >
           <Text style={styles.cardEmoji}>🚑</Text>
-          <Text style={styles.cardText}>Crises</Text>
+          <Text style={styles.cardText}>Detalhamento de Crises</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -128,18 +110,26 @@ const HomeLayout: React.FC = () => {
 
         <TouchableOpacity
           onPress={() => router.push("/home/educate/educate")}
-          style={styles.card}
+          style={styles.cardSmall}
         >
-          <Text style={styles.cardEmoji}>📚</Text>
-          <Text style={styles.cardText}>Informações</Text>
+          <Text style={styles.cardEmojiSmall}>📚</Text>
+          <Text style={styles.cardTextSmall}>Informações Úteis</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => router.push("/home/medicine/medicines")}
-          style={styles.card}
+          style={styles.cardSmall}
         >
-          <Text style={styles.cardEmoji}>💊</Text>
-          <Text style={styles.cardText}>Medicação</Text>
+          <Text style={styles.cardEmojiSmall}>💊</Text>
+          <Text style={styles.cardTextSmall}>Medicações em Uso</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setShowCalendar(true)}
+          style={styles.cardSmall}
+        >
+          <Text style={styles.cardEmojiSmall}>📋</Text>
+          <Text style={styles.cardTextSmall}>Enviar Relatório</Text>
         </TouchableOpacity>
       </View>
 
@@ -176,9 +166,9 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   headerText: {
-    fontSize: 28,
+    fontSize: 40,
     fontWeight: "700",
-    marginBottom: 30,
+    marginBottom: 10,
     color: "#333", // Darker color for better contrast
   },
   gridContainer: {
@@ -200,14 +190,43 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8, // Shadow for Android
   },
+  cardSmall: {
+    backgroundColor: "#ffe5e5", // Softer pink for the cards
+    width: 100, // Adjust based on design
+    height: 100,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    margin: 15, // Increased margin for better spacing
+    shadowColor: "#000", // Add shadow for a modern look
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8, // Shadow for Android
+  },
+
   cardEmoji: {
     fontSize: 55, // Larger emoji for a modern feel
+    marginBottom: 10, // Space between the emoji and text
+  },
+
+  cardEmojiSmall: {
+    fontSize: 30, // Larger emoji for a modern feel
     marginBottom: 10, // Space between the emoji and text
   },
   cardText: {
     fontSize: 18,
     fontWeight: "600",
     color: "#333",
+    textAlign: "center",
+    paddingHorizontal: 10,
+  },
+  cardTextSmall: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    paddingHorizontal: 10,
   },
   sosButtonContainer: {
     marginBottom: 30, // Bottom padding for the SOS button
