@@ -15,6 +15,23 @@ export function countSymptomsAndAura(crisis: Crisis, counters: any) {
   });
 }
 
+export function countContext(crisis: Crisis, counters: any) {
+  if (crisis.whatWasDoing) {
+    counters.contextCounts[crisis.whatWasDoing] =
+      (counters.contextCounts[crisis.whatWasDoing] || 0) + 1;
+  }
+}
+
+export function countTimeOfDay(crisis: Crisis, counters: any) {
+  const date = crisis.dateTime ? new Date(crisis.dateTime) : null;
+  if (!date) return;
+  const hour = date.getHours();
+  if (hour >= 6 && hour < 12) counters.timeOfDayCounts.morning++;
+  else if (hour >= 12 && hour < 18) counters.timeOfDayCounts.afternoon++;
+  else if (hour >= 18 && hour < 24) counters.timeOfDayCounts.evening++;
+  else counters.timeOfDayCounts.night++;
+}
+
 // Helper function to count crisis types, intensities, and recovery times
 export function countTypesAndIntensities(crisis: Crisis, counters: any) {
   if (crisis.type)
@@ -79,101 +96,6 @@ export function calculateAverageDuration(
   return countedCrises > 0 ? (totalDuration / countedCrises).toFixed(2) : "N/A";
 }
 
-// Helper function to format and ensure percentages add up to 100%
-export function formatPercentageDistribution(
-  occurrences: Record<string, number>,
-  total: number
-): string {
-  const rawPercentages = Object.entries(occurrences).map(([key, count]) => ({
-    key,
-    percentage: (count / total) * 100,
-  }));
-
-  // Round each percentage to one decimal place and sum them
-  let roundedPercentages = rawPercentages.map((item) => ({
-    key: item.key,
-    percentage: Math.round(item.percentage * 10) / 10,
-  }));
-
-  // Calculate the difference to ensure a total of 100%
-  const totalRounded = roundedPercentages.reduce(
-    (sum, item) => sum + item.percentage,
-    0
-  );
-  const roundingDifference = 100 - totalRounded;
-
-  // Distribute rounding difference to ensure the sum equals 100%
-  if (roundingDifference !== 0) {
-    const adjustment = roundingDifference / roundedPercentages.length;
-    roundedPercentages = roundedPercentages.map((item) => ({
-      key: item.key,
-      percentage: item.percentage + adjustment,
-    }));
-  }
-
-  // Format the output as a comma-separated string
-  return roundedPercentages
-    .map((item) => `${item.percentage.toFixed(1)}%: ${item.key}`)
-    .join(", ");
-}
-
-// Helper function to calculate related factors
-export function calculateRelatedFactors(data: any, crisesLength: number): any {
-  const calculateFactorPercentage = (count: number) =>
-    ((count / crisesLength) * 100).toFixed(1);
-
-  return {
-    tookMedicationPercentage: calculateFactorPercentage(
-      data.tookMedicationCount
-    ),
-    preMenstrualPercentage: calculateFactorPercentage(data.preMenstrualCount),
-    noMenstrualRelationPercentage: calculateFactorPercentage(
-      data.noMenstrualRelationCount
-    ),
-    poorSleepPercentage: calculateFactorPercentage(data.poorSleepCount),
-    alcoholPercentage: calculateFactorPercentage(data.alcoholCount),
-    foodVarietyPercentage: calculateFactorPercentage(data.foodVarietyCount),
-    emotionalStressPercentage: calculateFactorPercentage(
-      data.emotionalStressCount
-    ),
-    substanceUsePercentage: calculateFactorPercentage(data.substanceUseCount),
-    selfHarmPercentage: calculateFactorPercentage(data.selfHarmCount),
-  };
-}
-
-// Helper function to generate percentage distributions
-export function generatePercentageDistributions(
-  data: any,
-  crisesLength: number
-): any {
-  return {
-    mostFrequentSymptoms: formatPercentageDistribution(
-      data.symptomCounts,
-      crisesLength
-    ),
-    crisisManifestations: formatPercentageDistribution(
-      data.crisisTypes,
-      crisesLength
-    ),
-    intensityDistribution: formatPercentageDistribution(
-      data.intensityCounts,
-      crisesLength
-    ),
-    recoveryDistribution: formatPercentageDistribution(
-      data.recoveryCounts,
-      crisesLength
-    ),
-    postStateDistribution: formatPercentageDistribution(
-      data.postStateCounts,
-      crisesLength
-    ),
-    auraSymptomDistribution: formatPercentageDistribution(
-      data.auraSymptomCounts,
-      crisesLength
-    ),
-  };
-}
-
 // Helper function to analyze crisis data and calculate counts
 export function analyzeCrisisData(crises: Crisis[]): any {
   const counters = initializeCounters();
@@ -182,6 +104,8 @@ export function analyzeCrisisData(crises: Crisis[]): any {
     countSymptomsAndAura(crisis, counters);
     countTypesAndIntensities(crisis, counters);
     countPostStateAndFactors(crisis, counters);
+    countTimeOfDay(crisis, counters);
+    countContext(crisis, counters);
   });
 
   counters.avgDuration = calculateAverageDuration(
@@ -213,6 +137,8 @@ function initializeCounters(): CrisisData {
     countedCrises: 0,
     avgDuration: "N/A",
     recentChangeOnMedication: 0,
+    timeOfDayCounts: { morning: 0, afternoon: 0, evening: 0, night: 0 },
+    contextCounts: {},
   };
 }
 

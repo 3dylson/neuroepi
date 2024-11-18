@@ -11,7 +11,37 @@ export function generateCharts(data: CrisisData): ChartsUrls {
     manifestationChartUrl: generateManifestationChartUrl(data.crisisTypes),
     recoveryChartUrl: generateRecoveryChartUrl(data.recoveryCounts),
     relatedFactorsChartUrl: generateRelatedFactorsChartUrl(data),
+    timeOfDayChartUrl: generateTimeOfDayChartUrl(data.timeOfDayCounts),
+    contextChartUrl: generateContextChartUrl(data.contextCounts),
   };
+}
+
+export function generateContextChartUrl(
+  contextCounts: Record<string, number>
+): string {
+  const contextLabels = Object.keys(contextCounts);
+  return chartConfigWithColor(
+    "doughnut",
+    contextCounts,
+    generateColorArray(
+      ["#FF4500", "#32CD32", "#1E90FF", "#FFD700", "#8A2BE2"],
+      contextLabels.length
+    ),
+    "Distribuição por Contexto Antes da Crise",
+    contextLabels
+  );
+}
+
+export function generateTimeOfDayChartUrl(
+  timeOfDayCounts: Record<string, number>
+): string {
+  return chartConfigSingleColor(
+    "bar",
+    timeOfDayCounts,
+    "#FFA07A",
+    "Distribuição por Período do Dia",
+    ["Manhã", "Tarde", "Noite", "Madrugada"]
+  );
 }
 
 export function generatePostStateChartUrl(

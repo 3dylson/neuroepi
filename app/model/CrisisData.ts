@@ -19,4 +19,6 @@ export interface CrisisData {
   countedCrises: number;
   avgDuration: string;
   recentChangeOnMedication: number;
+  timeOfDayCounts: Record<string, number>;
+  contextCounts: Record<string, number>;
 }

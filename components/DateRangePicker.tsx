@@ -89,7 +89,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             onDayPress={onDayPress}
             markedDates={markedDates}
             markingType={"period"}
-            maxDate={maximumDate} // Set the maximum date
+            maxDate={
+              maximumDate ? maximumDate.toISOString().split("T")[0] : undefined
+            } // Set the maximum date
           />
           {startDate && (
             <Text style={styles.dateText}>

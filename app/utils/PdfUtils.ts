@@ -7,18 +7,10 @@ import { Platform } from "react-native";
 import * as Sharing from "expo-sharing";
 import { DateUtils } from "./TimeUtils";
 import { Medicine } from "../model/Medicine";
-import {
-  chartConfigSingleColor,
-  chartConfigWithColor,
-  generateCharts,
-  generateColorArray,
-} from "./ChartUtils";
-import {
-  analyzeCrisisData,
-  calculateRelatedFactors,
-  generatePercentageDistributions,
-} from "./StatsUtils";
+import { generateCharts } from "./ChartUtils";
+import { analyzeCrisisData } from "./StatsUtils";
 import { formatReportPeriod } from "./Utils";
+import { ChartInfo } from "../model/ChartInfo";
 
 // Helper function to format HTML content sections
 function formatHTMLSection(title: string, content: string) {
@@ -35,83 +27,34 @@ function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
     .map((m) => m.relatedMedication);
 }
 
-/// Helper function to format a summary of crises in HTML format with additional insights and charts
-function formatCrisesList(crises: Crisis[] | null, avgDuration: any): string {
+// Helper function to format a summary of crises in HTML format with additional insights and charts
+function formatCrisesList(
+  crises: Crisis[] | null,
+  avgDuration: number = 0
+): string {
   if (!crises || crises.length === 0) return "<p>Nenhuma crise registrada.</p>";
 
-  const durationMapping = {
-    "< 1 minuto": 0.5,
-    "1 a 3 minutos": 2,
-    "> 5 minutos": 5,
-    "Não sei": 0,
-  };
+  const totalCrises = crises.length;
 
-  let totalCrises = crises.length;
-  let symptomVariety = new Set<string>();
-  let mostRecentCrisisDate: Date | null = null;
-  let timeOfDayCounts = { morning: 0, afternoon: 0, evening: 0, night: 0 };
-  let contextCounts: Record<string, number> = {};
+  // Get the most recent crisis date
+  const mostRecentCrisisDate = crises
+    .map((crisis) => (crisis.dateTime ? new Date(crisis.dateTime) : null))
+    .filter((date) => date !== null) as Date[];
 
-  const chartPeriod = formatReportPeriod(crises || []);
+  const latestCrisisDate =
+    mostRecentCrisisDate.length > 0
+      ? new Date(
+          Math.max(...mostRecentCrisisDate.map((date) => date!.getTime()))
+        )
+      : null;
 
-  // Analyze crises data
-  crises.forEach((crisis) => {
-    const crisisDate = crisis.dateTime ? new Date(crisis.dateTime) : null;
-
-    // Record the most recent crisis date
-    if (
-      crisisDate &&
-      (!mostRecentCrisisDate || crisisDate > mostRecentCrisisDate)
-    ) {
-      mostRecentCrisisDate = crisisDate;
-    }
-
-    // Track time of day
-    if (crisisDate) {
-      const hour = crisisDate.getHours();
-      if (hour >= 5 && hour < 12) timeOfDayCounts.morning++;
-      else if (hour >= 12 && hour < 17) timeOfDayCounts.afternoon++;
-      else if (hour >= 17 && hour < 21) timeOfDayCounts.evening++;
-      else timeOfDayCounts.night++;
-    }
-
-    // Track symptoms and contexts
-    crisis.symptomsBefore?.forEach((symptom) => symptomVariety.add(symptom));
-    if (crisis.whatWasDoing) {
-      contextCounts[crisis.whatWasDoing] =
-        (contextCounts[crisis.whatWasDoing] || 0) + 1;
-    }
-  });
-
-  const daysSinceLastCrisis = mostRecentCrisisDate
+  const daysSinceLastCrisis = latestCrisisDate
     ? Math.floor(
-        (new Date().getTime() -
-          ((mostRecentCrisisDate as Date)?.getTime() || 0)) /
-          (1000 * 60 * 60 * 24)
+        (Date.now() - latestCrisisDate.getTime()) / (1000 * 60 * 60 * 24)
       )
     : "N/A";
 
-  // Chart URLs
-  const timeOfDayChartUrl = chartConfigSingleColor(
-    "bar",
-    timeOfDayCounts,
-    "#FFA07A",
-    "Distribuição por Período do Dia",
-    ["Manhã", "Tarde", "Noite", "Madrugada"]
-  );
-
-  const contextLabels = Object.keys(contextCounts);
-  const contextValues = Object.values(contextCounts);
-  const contextChartUrl = chartConfigWithColor(
-    "doughnut",
-    contextCounts,
-    generateColorArray(
-      ["#FF4500", "#32CD32", "#1E90FF", "#FFD700", "#8A2BE2"],
-      contextLabels.length
-    ),
-    "Distribuição por Contexto Antes da Crise",
-    contextLabels
-  );
+  const chartPeriod = formatReportPeriod(crises);
 
   // Generate HTML summary with charts
   return `
@@ -119,138 +62,142 @@ function formatCrisesList(crises: Crisis[] | null, avgDuration: any): string {
       <p><strong>Total de Crises Registradas no período de ${chartPeriod}:</strong> ${totalCrises}</p>
       <p><strong>Duração Média das Crises:</strong> ${avgDuration} minutos</p>
       <p><strong>Dias desde a Última Crise:</strong> ${daysSinceLastCrisis} dias</p>
-      
-      <div class="charts-container">
-        <div class="chart-item">
-          <h4>Distribuição por Período do Dia</h4>
-          <img src="${timeOfDayChartUrl}" alt="Distribuição por Período do Dia" />
-        </div>
-        ${
-          contextChartUrl
-            ? `<div class="chart-item">
-                <h4>Atividades que Precederam à Crise</h4>
-                <img src="${contextChartUrl}" alt="Contexto Antes da Crise" />
-              </div>`
-            : "<p>Nenhum contexto registrado.</p>"
-        }
-      </div>
     </div>
   `;
 }
 
-// Function to generate HTML content for PDF with optimized structure
 async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
-  const user = await User.getFromLocal();
+  // Fetch user data and analyze crisis data in parallel for efficiency
+  const [user, crisisData] = await Promise.all([
+    User.getFromLocal(),
+    analyzeCrisisData(crises || []),
+  ]);
+
   if (!user) throw new Error("User data is not available");
 
   const userData = getUserData(user);
-  const crisisData = analyzeCrisisData(crises || []);
-  const distributions = generatePercentageDistributions(
-    crisisData,
-    crises?.length || 0
-  );
-  const factors = calculateRelatedFactors(crisisData, crises?.length || 0);
   const charts = generateCharts(crisisData);
   const chartPeriod = formatReportPeriod(crises || []);
 
+  // Generate individual sections
+  const patientInfo = formatHTMLSection("Informações do Paciente", userData);
+  const crisisInfo = formatHTMLSection(
+    "Informações das Crises",
+    formatCrisesList(crises, crisisData.avgDuration)
+  );
+  const chartsSummary = formatHTMLSection("", generateSummarySection(charts));
+
+  // Return the final HTML content
   return `
-  <html>
-    <head><style>${cssStyles()}</style></head>
-    <body>
-      <div class="header">
-        <h1>Relatório Médico</h1>
-        <p><strong>Período do Relatório:</strong> ${chartPeriod}</p>
-      </div>
-      ${formatHTMLSection("Informações do Paciente", userData)}
-      ${formatHTMLSection(
-        "Informações das Crises",
-        `<ul>${formatCrisesList(crises, crisisData.avgDuration)}</ul>`
-      )}
-      ${formatHTMLSection(
-        "",
-        generateSummarySection(
-          distributions,
-          factors,
-          crisisData.avgDuration,
-          charts
-        )
-      )}
-    </body>
-  </html>
+    <html>
+      <head><style>${cssStyles()}</style></head>
+      <body>
+        <div class="header">
+          <h1>Relatório Médico</h1>
+          <p><strong>Período do Relatório:</strong> ${chartPeriod}</p>
+        </div>
+        ${patientInfo}
+        ${crisisInfo}
+        ${chartsSummary}
+      </body>
+    </html>
   `;
+}
+
+// Utility function to handle "N/A" fallback
+function formatValue(value?: string | null): string {
+  return value ? value : "N/A";
 }
 
 // Helper function to structure user data
 function getUserData(user: User): string {
-  const {
-    birthDate,
-    phoneNumber,
-    emergencyContact,
-    emergencyContact2,
-    firstName,
-    lastName,
-    diagnostic,
-    medicines,
-    allergies,
-  } = user;
-  const formattedBirthDate = birthDate
-    ? DateUtils.toDayMonthYearString(birthDate)
+  const formattedBirthDate = user.birthDate
+    ? DateUtils.toDayMonthYearString(user.birthDate)
     : "N/A";
-  const medicinesUsed = medicines?.map((m) => m.name).join(", ") || "N/A";
-  const allergiesList = allergies?.join(", ") || "N/A";
-  const otherDiseases = getAnyOtherDisease(medicines || null).join(", ");
 
-  return `
-    <p><strong>Nome:</strong> ${firstName} ${lastName}</p>
-    <p><strong>Data de nascimento:</strong> ${formattedBirthDate}</p>
-    <p><strong>Contato de telefone:</strong> ${phoneNumber || "N/A"}</p>
-    <p><strong>Contato de emergência 1:</strong> ${
-      emergencyContact || "N/A"
-    }</p>
-    <p><strong>Contato de emergência 2:</strong> ${
-      emergencyContact2 || "N/A"
-    }</p>
-    <p><strong>Diagnóstico:</strong> ${diagnostic || "N/A"}</p>
-    <p><strong>Em uso de:</strong> ${medicinesUsed}</p>
-    <p><strong>Alergias:</strong> ${allergiesList}</p>
-    <p><strong>Alguma outra doença?:</strong> ${otherDiseases}</p>
-  `;
+  const medicinesUsed = user.medicines?.map((m) => m.name).join(", ") || "N/A";
+  const allergiesList = user.allergies?.join(", ") || "N/A";
+  const otherDiseases =
+    getAnyOtherDisease(user.medicines || []).join(", ") || "N/A";
+
+  const fields = [
+    { label: "Nome", value: `${user.firstName} ${user.lastName}` },
+    { label: "Data de nascimento", value: formattedBirthDate },
+    { label: "Contato de telefone", value: formatValue(user.phoneNumber) },
+    {
+      label: "Contato de emergência 1",
+      value: formatValue(user.emergencyContact),
+    },
+    {
+      label: "Contato de emergência 2",
+      value: formatValue(user.emergencyContact2),
+    },
+    { label: "Diagnóstico", value: formatValue(user.diagnostic) },
+    { label: "Em uso de", value: medicinesUsed },
+    { label: "Alergias", value: allergiesList },
+    { label: "Alguma outra doença?", value: otherDiseases },
+  ];
+
+  return fields
+    .map(({ label, value }) => `<p><strong>${label}:</strong> ${value}</p>`)
+    .join("\n");
 }
 
-// Helper function to structure the summary section
-// Helper function to structure the summary section with a 2x2 layout for charts
-function generateSummarySection(
-  distributions: any,
-  factors: any,
-  avgDuration: string,
-  charts: any
-): string {
+function generateSummarySection(charts: any): string {
+  const chartData: ChartInfo[] = [
+    {
+      title: "Tipos de Crises",
+      url: charts.manifestationChartUrl,
+      altText: "Tipos de Crises",
+    },
+    {
+      title: "Distribuição da Intensidade das Crises",
+      url: charts.intensityChartUrl,
+      altText: "Distribuição da Intensidade das Crises",
+    },
+    {
+      title: "Distribuição por Período do Dia",
+      url: charts.timeOfDayChartUrl,
+      altText: "Distribuição por Período do Dia",
+    },
+    {
+      title: "Fatores Relacionados às Crises",
+      url: charts.relatedFactorsChartUrl,
+      altText: "Fatores Relacionados às Crises",
+    },
+    {
+      title: "Sintomas Antes da Crise (Auras)",
+      url: charts.symptomsChartUrl,
+      altText: "Sintomas Mais Frequentes",
+    },
+    {
+      title: "Tempo de Recuperação",
+      url: charts.recoveryChartUrl,
+      altText: "Tempo de Recuperação",
+    },
+    {
+      title: "Atividades que Precederam à Crise",
+      url: charts.contextChartUrl,
+      altText: "Contexto Antes da Crise",
+    },
+    {
+      title: "Distribuição do Estado Pós Crises",
+      url: charts.postStateChartUrl,
+      altText: "Distribuição do Estado Pós Crises",
+    },
+  ];
+
   return `
     <div class="charts-container">
-     <div class="chart-item">
-        <h4>Distribuição do Estado Pós Crises</h4>
-        <img src="${charts.postStateChartUrl}" alt="Distribuição do Estado Pós Crises" />
-      </div>
-      <div class="chart-item">
-        <h4>Distribuição da Intensidade das Crises</h4>
-        <img src="${charts.intensityChartUrl}" alt="Distribuição da Intensidade das Crises" />
-      </div>
-      <div class="chart-item">
-        <h4>Sintomas Antes da Crise (Auras)</h4>
-        <img src="${charts.symptomsChartUrl}" alt="Sintomas Mais Frequentes" />
-      </div>
-      <div class="chart-item">
-        <h4>Tipos de Crises</h4>
-        <img src="${charts.manifestationChartUrl}" alt="Tipos de Crises" />
-      </div>
-      <div class="chart-item">
-        <h4>Tempo de Recuperação</h4>
-        <img src="${charts.recoveryChartUrl}" alt="Tempo de Recuperação" />
-      </div>
-      <div class="chart-item">
-        <h4>Fatores Relacionados às Crises</h4>
-        <img src="${charts.relatedFactorsChartUrl}" alt="Fatores Relacionados às Crises" />
-      </div>
+      ${chartData
+        .map(
+          (chart) => `
+          <div class="chart-item">
+            <h4>${chart.title}</h4>
+            <img src="${chart.url}" alt="${chart.altText}" />
+          </div>`
+        )
+        .join("")}
     </div>
   `;
 }

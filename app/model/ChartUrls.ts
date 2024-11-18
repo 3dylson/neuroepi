@@ -5,4 +5,6 @@ export interface ChartsUrls {
   recoveryChartUrl: string;
   relatedFactorsChartUrl: string;
   postStateChartUrl: string;
+  timeOfDayChartUrl: string;
+  contextChartUrl: string;
 }
