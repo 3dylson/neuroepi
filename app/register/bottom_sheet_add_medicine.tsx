@@ -52,6 +52,7 @@ const BottomSheetAddMedicineScreen: React.FC<
   const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState<
     null | number
   >(null);
+  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
@@ -150,40 +151,37 @@ const BottomSheetAddMedicineScreen: React.FC<
     </View>
   );
 
-  const renderTimePopoverContent = (selectItem: (item: string) => void) => {
-    const [selectedTime, setSelectedTime] = useState<Date>(new Date());
-
-    return (
-      <View style={styles.menu}>
-        <CustomDateTimePicker
-          value={selectedTime}
-          mode="time"
-          onChange={(event, date) => {
-            if (date) {
-              setSelectedTime(date);
-              handleTimeChange(
-                timeList.length - 1,
-                DateUtils.toHourMinuteString(date)
-              );
+  const renderTimePopoverContent = (selectItem: (item: string) => void) => (
+    <View style={styles.menu}>
+      <CustomDateTimePicker
+        value={selectedTime}
+        mode="time"
+        onChange={(_event, date) => {
+          if (date) {
+            setSelectedTime(date);
+            handleTimeChange(
+              timeList.length - 1,
+              DateUtils.toHourMinuteString(date)
+            );
+          }
+        }}
+      />
+      {isIOS() && (
+        <Button
+          mode="contained"
+          onPress={() => {
+            if (selectedTime) {
+              const timeString = DateUtils.toHourMinuteString(selectedTime);
+              handleTimeChange(timeList.length - 1, timeString);
+              selectItem(timeString);
             }
           }}
-        />
-        {isIOS() && (
-          <Button
-            mode="contained"
-            onPress={() => {
-              if (selectedTime) {
-                const timeString = DateUtils.toHourMinuteString(selectedTime);
-                selectItem(timeString);
-              }
-            }}
-          >
-            Confirmar
-          </Button>
-        )}
-      </View>
-    );
-  };
+        >
+          Confirm
+        </Button>
+      )}
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -307,7 +305,7 @@ const BottomSheetAddMedicineScreen: React.FC<
                 value={new Date()}
                 mode="time"
                 display="spinner"
-                onChange={(event, date) => {
+                onChange={(_event, date) => {
                   if (date) {
                     setRenderAndroidTimePicker(null);
                     const timeString = DateUtils.toHourMinuteString(date);

@@ -6,34 +6,23 @@ import {
 } from "../model/Crisis/FieldsEnums";
 import { CrisisData } from "../model/CrisisData";
 
-export function countSymptomsAndAura(crisis: Crisis, counters: any) {
+// Consolidated counting function
+function countCrisisAttributes(crisis: Crisis, counters: CrisisData) {
+  // Count Symptoms and Auras
   crisis.symptomsBefore?.forEach((symptom) => {
     counters.symptomCounts[symptom] =
       (counters.symptomCounts[symptom] || 0) + 1;
     counters.auraSymptomCounts[symptom] =
       (counters.auraSymptomCounts[symptom] || 0) + 1;
   });
-}
 
-export function countContext(crisis: Crisis, counters: any) {
+  // Count Context
   if (crisis.whatWasDoing) {
     counters.contextCounts[crisis.whatWasDoing] =
       (counters.contextCounts[crisis.whatWasDoing] || 0) + 1;
   }
-}
 
-export function countTimeOfDay(crisis: Crisis, counters: any) {
-  const date = crisis.dateTime ? new Date(crisis.dateTime) : null;
-  if (!date) return;
-  const hour = date.getHours();
-  if (hour >= 6 && hour < 12) counters.timeOfDayCounts.morning++;
-  else if (hour >= 12 && hour < 18) counters.timeOfDayCounts.afternoon++;
-  else if (hour >= 18 && hour < 24) counters.timeOfDayCounts.evening++;
-  else counters.timeOfDayCounts.night++;
-}
-
-// Helper function to count crisis types, intensities, and recovery times
-export function countTypesAndIntensities(crisis: Crisis, counters: any) {
+  // Count Crisis Types, Intensities, and Recovery Times
   if (crisis.type)
     counters.crisisTypes[crisis.type] =
       (counters.crisisTypes[crisis.type] || 0) + 1;
@@ -44,40 +33,38 @@ export function countTypesAndIntensities(crisis: Crisis, counters: any) {
     counters.recoveryCounts[crisis.recoverySpeed] =
       (counters.recoveryCounts[crisis.recoverySpeed] || 0) + 1;
 
-  const durationMapping = {
+  // Count Duration
+  const durationMapping: Record<string, number> = {
     "< 1 minuto": 0.5,
     "1 a 3 minutos": 2,
     "> 5 minutos": 5,
     "Não sei": 0,
   };
-  const mappedDuration =
-    durationMapping[crisis.duration as keyof typeof durationMapping];
-  if (mappedDuration !== undefined) {
-    counters.totalDuration += mappedDuration;
+  const duration = durationMapping[crisis.duration || ""] ?? 0;
+  if (duration > 0) {
+    counters.totalDuration += duration;
     counters.countedCrises++;
   }
-}
 
-// Helper function to count post-state and related factors
-export function countPostStateAndFactors(crisis: Crisis, counters: any) {
+  // Count Post-State and Related Factors
   crisis.postState?.forEach((state) => {
     counters.postStateCounts[state] =
       (counters.postStateCounts[state] || 0) + 1;
   });
 
-  // TODO change name
-  if (crisis.tookMedication == false) counters.tookMedicationCount++;
+  if (crisis.tookMedication === false) counters.tookMedicationCount++;
   if (
     crisis.menstruationOrPregnancy === MenstruationOrPregnancy.Pre3Menstruation
   )
     counters.preMenstrualCount++;
   if (
-    !crisis.menstruationOrPregnancy ||
-    [MenstruationOrPregnancy.No, MenstruationOrPregnancy.Pregnant].includes(
-      crisis.menstruationOrPregnancy as MenstruationOrPregnancy
+    ![MenstruationOrPregnancy.Pre3Menstruation].includes(
+      (crisis.menstruationOrPregnancy as MenstruationOrPregnancy) ||
+        MenstruationOrPregnancy.No
     )
-  )
+  ) {
     counters.noMenstrualRelationCount++;
+  }
 
   if (crisis.sleepStatus === SleepStatus.Bad) counters.poorSleepCount++;
   if (crisis.alcohol) counters.alcoholCount++;
@@ -88,24 +75,32 @@ export function countPostStateAndFactors(crisis: Crisis, counters: any) {
   if (crisis.recentChangeOnMedication) counters.recentChangeOnMedication++;
 }
 
-// Helper function to calculate average duration
-export function calculateAverageDuration(
+// Count Time of Day
+function countTimeOfDay(crisis: Crisis, counters: CrisisData) {
+  const hour = crisis.dateTime ? new Date(crisis.dateTime).getHours() : null;
+  if (hour !== null) {
+    if (hour >= 6 && hour < 12) counters.timeOfDayCounts.morning++;
+    else if (hour >= 12 && hour < 18) counters.timeOfDayCounts.afternoon++;
+    else if (hour >= 18 && hour < 24) counters.timeOfDayCounts.evening++;
+    else counters.timeOfDayCounts.night++;
+  }
+}
+
+// Calculate Average Duration
+function calculateAverageDuration(
   totalDuration: number,
   countedCrises: number
 ): string {
   return countedCrises > 0 ? (totalDuration / countedCrises).toFixed(2) : "N/A";
 }
 
-// Helper function to analyze crisis data and calculate counts
-export function analyzeCrisisData(crises: Crisis[]): any {
+// Analyze Crisis Data
+export function analyzeCrisisData(crises: Crisis[]): CrisisData {
   const counters = initializeCounters();
 
   crises.forEach((crisis) => {
-    countSymptomsAndAura(crisis, counters);
-    countTypesAndIntensities(crisis, counters);
-    countPostStateAndFactors(crisis, counters);
+    countCrisisAttributes(crisis, counters);
     countTimeOfDay(crisis, counters);
-    countContext(crisis, counters);
   });
 
   counters.avgDuration = calculateAverageDuration(
@@ -115,7 +110,7 @@ export function analyzeCrisisData(crises: Crisis[]): any {
   return counters;
 }
 
-// Helper function to initialize counters
+// Initialize Counters
 function initializeCounters(): CrisisData {
   return {
     intensityCounts: {},
@@ -142,7 +137,7 @@ function initializeCounters(): CrisisData {
   };
 }
 
-// Helper to normalize data to percentages
+// Normalize Data to Percentages
 export function normalizeToPercentages(
   counts: Record<string, number>
 ): number[] {

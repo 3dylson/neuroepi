@@ -30,7 +30,7 @@ function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
 // Helper function to format a summary of crises in HTML format with additional insights and charts
 function formatCrisesList(
   crises: Crisis[] | null,
-  avgDuration: number = 0
+  avgDuration: string
 ): string {
   if (!crises || crises.length === 0) return "<p>Nenhuma crise registrada.</p>";
 

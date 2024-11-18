@@ -1,10 +1,9 @@
 import { isIOS } from "@/app/utils/Utils";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Text,
   ViewStyle,
   ScrollView,
 } from "react-native";
@@ -12,25 +11,24 @@ import { TextInput, TextInputProps } from "react-native-paper";
 import Popover from "react-native-popover-view";
 import { Placement } from "react-native-popover-view/dist/Types";
 
-// Define props types for the component
 interface DropDownInputProps {
-  label?: string; // Label for TextInput
-  text: string; // Text value for the input
-  textInputProps?: TextInputProps; // Props for customizing the TextInput
+  label?: string;
+  text: string;
+  textInputProps?: TextInputProps;
   renderPopoverContent?: (
     selectItem: (item: string) => void
-  ) => React.ReactNode; // Function to render custom popover content
-  onItemSelect?: (item: string) => void; // Callback when an item is selected
-  popoverPlacement?: Placement; // Popover placement
-  containerStyle?: ViewStyle; // Optional style for the container
-  customAction?: () => void; // Custom action to be executed
+  ) => React.ReactNode;
+  onItemSelect?: (item: string) => void;
+  popoverPlacement?: Placement;
+  containerStyle?: ViewStyle;
+  customAction?: () => void;
 }
 
 const DropDownInput: React.FC<DropDownInputProps> = ({
   label = "Select an option",
   text = "",
   textInputProps = {},
-  renderPopoverContent = null,
+  renderPopoverContent,
   onItemSelect,
   popoverPlacement = Placement.AUTO,
   containerStyle,
@@ -39,25 +37,36 @@ const DropDownInput: React.FC<DropDownInputProps> = ({
   const [visible, setVisible] = useState(false);
   const [inputText, setInputText] = useState<string>(text);
 
-  const anchorRef = useRef<TouchableOpacity>(null); // Ref for positioning popover
+  const anchorRef = useRef<TouchableOpacity>(null);
+  const isIOSPlatform = isIOS();
 
-  const openMenu = () => {
+  // Memoized functions to prevent unnecessary re-renders
+  const openMenu = useCallback(() => {
     if (renderPopoverContent) {
       setVisible(true);
     } else {
       customAction();
     }
-  };
-  const closeMenu = () => setVisible(false);
+  }, [renderPopoverContent, customAction]);
 
-  // Internal function to handle item selection
-  const handleItemSelect = (item: string) => {
-    setInputText(item);
-    closeMenu();
-    if (onItemSelect) {
-      onItemSelect(item); // Trigger callback if provided
-    }
-  };
+  const closeMenu = useCallback(() => setVisible(false), []);
+
+  const handleItemSelect = useCallback(
+    (item: string) => {
+      setInputText(item);
+      closeMenu();
+      if (onItemSelect) {
+        onItemSelect(item);
+      }
+    },
+    [onItemSelect, closeMenu]
+  );
+
+  // Memoize popover content to optimize rendering
+  const popoverContent = useMemo(
+    () => renderPopoverContent && renderPopoverContent(handleItemSelect),
+    [renderPopoverContent, handleItemSelect]
+  );
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -69,25 +78,25 @@ const DropDownInput: React.FC<DropDownInputProps> = ({
         <TextInput
           label={label}
           value={text}
-          {...(isIOS() && {
+          {...(isIOSPlatform && {
             onPress: openMenu,
           })}
           onPress={openMenu}
           onChangeText={setInputText}
           right={<TextInput.Icon icon="menu-down" onPress={openMenu} />}
-          {...textInputProps} // Pass custom TextInput props
+          {...textInputProps}
         />
       </TouchableOpacity>
 
-      {renderPopoverContent && (
+      {popoverContent && (
         <Popover
           isVisible={visible}
           from={anchorRef}
           onRequestClose={closeMenu}
-          placement={popoverPlacement} // Allow dynamic placement
+          placement={popoverPlacement}
         >
           <ScrollView style={styles.popoverContent}>
-            {renderPopoverContent(handleItemSelect)}
+            {popoverContent}
           </ScrollView>
         </Popover>
       )}
@@ -95,7 +104,7 @@ const DropDownInput: React.FC<DropDownInputProps> = ({
   );
 };
 
-// Styles for the component
+// Styles
 const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
@@ -110,14 +119,6 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#fff",
     borderRadius: 4,
-  },
-  menu: {
-    padding: 8,
-    backgroundColor: "#fff",
-    borderRadius: 4,
-  },
-  menuItem: {
-    padding: 12,
   },
 });
 
