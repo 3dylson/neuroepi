@@ -64,3 +64,10 @@ export enum MenstruationOrPregnancy {
   Pre3Menstruation = "3 dias anteriores ao periodo",
   No = "Não",
 }
+
+export enum DuringCrisisSymptoms {
+  TongueInjury = "Ferimento na língua",
+  HeadInjury = "Ferimento na cabeça",
+  OtherRegionInjury = "Ferimento em outras regiões",
+  FezesUrine = "Liberação de urina ou fezes",
+}

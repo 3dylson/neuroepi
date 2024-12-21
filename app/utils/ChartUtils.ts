@@ -13,7 +13,21 @@ export function generateCharts(data: CrisisData): ChartsUrls {
     relatedFactorsChartUrl: generateRelatedFactorsChartUrl(data),
     timeOfDayChartUrl: generateTimeOfDayChartUrl(data.timeOfDayCounts),
     contextChartUrl: generateContextChartUrl(data.contextCounts),
+    activitiesDuringCrisisChartUrl: generateActivitiesDuringCrisisChartUrl(
+      data.activitiesDuringCrisisCounts
+    ),
   };
+}
+
+export function generateActivitiesDuringCrisisChartUrl(
+  activitiesDuringCrisis: Record<string, number>
+): string {
+  return chartConfigWithColor(
+    "pie",
+    activitiesDuringCrisis,
+    ["#FFD700", "#FFB6C1", "#87CEFA", "#98FB98", "#FFDEAD"],
+    ""
+  );
 }
 
 export function generateContextChartUrl(
@@ -92,7 +106,7 @@ export function generateRecoveryChartUrl(
   recoveryCounts: Record<string, number>
 ): string {
   return chartConfigSingleColor(
-    "horizontalBar",
+    "bar",
     recoveryCounts,
     "#ffcc56",
     "Recuperação"
@@ -171,7 +185,7 @@ export function generateRelatedFactorsChartUrl(data: CrisisData): string {
         plugins: {
           datalabels: {
             display: true,
-            formatter: (value: number) => `${value}%`,
+            formatter: "(value) => `${value}%`", // Formatter as a string
             color: "#000000", // Black text color for maximum contrast
             anchor: "bottom", // Change anchor to end
             align: "bottom", // Change align to end
@@ -213,6 +227,16 @@ export function generateRelatedFactorsChartUrl(data: CrisisData): string {
         maintainAspectRatio: true,
         responsive: true,
       },
+    }).replace(/"(formatter|callback)":".*?"/g, (match) => {
+      // Replace "formatter": "function as string" with the actual function
+      const key = match.split(":")[0];
+      if (key === '"formatter"') {
+        return '"formatter": (value) => `${value}%`';
+      }
+      if (key === '"callback"') {
+        return '"callback": (value) => ``${value}%`';
+      }
+      return match;
     })
   )}`;
 }
@@ -257,7 +281,7 @@ export function chartConfigWithColor(
         plugins: {
           datalabels: {
             display: true,
-            formatter: (value: number) => `${Math.round(value)}%`,
+            formatter: "(value) => `${Math.round(value)}%`", // Formatter as a string
             color: "#000000",
             anchor: "center",
             align: "center",
@@ -274,17 +298,27 @@ export function chartConfigWithColor(
           y: {
             beginAtZero: true,
             ticks: {
-              callback: (value: number) => `${Math.round(value)}%`, // Show rounded percentage on Y-axis
+              callback: "(value) => `${Math.round(value)}%`", // Callback as a string
             },
           },
           x: {
             beginAtZero: true,
             ticks: {
-              callback: (value: number) => `${Math.round(value)}%`, // Show rounded percentage on X-axis for horizontal bar
+              callback: "(value) => `${Math.round(value)}%`", // Callback as a string
             },
           },
         },
       },
+    }).replace(/"(formatter|callback)":".*?"/g, (match) => {
+      // Replace "formatter": "function as string" with the actual function
+      const key = match.split(":")[0];
+      if (key === '"formatter"') {
+        return '"formatter": (value) => `${Math.round(value)}%`';
+      }
+      if (key === '"callback"') {
+        return '"callback": (value) => `${Math.round(value)}%`';
+      }
+      return match;
     })
   )}`;
 }
@@ -329,11 +363,15 @@ export function chartConfigSingleColor(
         plugins: {
           datalabels: {
             display: true,
-            formatter: (value: number) => `${value}%`, // Show rounded percentage
-            color: "#000000",
+            formatter: "(value) => `${value}%`",
             anchor: type === "bar" ? "end" : "center",
-            align: type === "bar" ? "bottom" : "center",
+            align: type === "bar" ? "top" : "center",
             clip: false,
+            color: "#fff",
+            backgroundColor: "rgba(34, 139, 34, 0.6)",
+            borderColor: "rgba(34, 139, 34, 1.0)",
+            borderWidth: 1,
+            borderRadius: 5,
             font: {
               size: 16,
               weight: "bold",
@@ -360,6 +398,16 @@ export function chartConfigSingleColor(
         },
         maintainAspectRatio: false,
       },
+    }).replace(/"(formatter|callback)":".*?"/g, (match) => {
+      // Replace "formatter": "function as string" with the actual function
+      const key = match.split(":")[0];
+      if (key === '"formatter"') {
+        return '"formatter": (value) => `${value}%`';
+      }
+      if (key === '"callback"') {
+        return '"callback": (value) => ``${value}%`';
+      }
+      return match;
     })
   )}`;
 }

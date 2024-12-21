@@ -21,4 +21,5 @@ export interface CrisisData {
   recentChangeOnMedication: number;
   timeOfDayCounts: Record<string, number>;
   contextCounts: Record<string, number>;
+  activitiesDuringCrisisCounts: Record<string, number>;
 }

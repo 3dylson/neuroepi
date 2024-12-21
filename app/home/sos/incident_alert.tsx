@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  AppStateStatus,
+  AppState,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
@@ -43,6 +50,9 @@ const IncidentAlertScreen: React.FC = () => {
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
+  const [appState, setAppState] = useState<AppStateStatus>(
+    AppState.currentState
+  );
 
   // Function to retrieve user's emergency contact from storage
   const loadUserEmergencyContact = async () => {
@@ -97,6 +107,29 @@ const IncidentAlertScreen: React.FC = () => {
       sendEmergencyMessage();
     }
   }, [emergencyContactNumber, location]);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (appState === "background" && nextAppState === "active") {
+        console.log("App has come to the foreground!");
+        onResume();
+      }
+      setAppState(nextAppState);
+    };
+
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState]);
+
+  const onResume = () => {
+    openEmergencySheet();
+  };
 
   // Request location permission and retrieve user's current location
   const getCurrentLocation = async () => {
@@ -173,7 +206,7 @@ const IncidentAlertScreen: React.FC = () => {
   const colorBottom = BOTTOM_COLORS_SPECTRUM[bottomIndex];
 
   const openEmergencySheet = () => {
-    setShowCalendar(true);
+    router.push("/home/sos/emergency_sheet");
   };
 
   return (

@@ -32,6 +32,9 @@ const CriseFormScreen: React.FC = () => {
   const [intensity, setIntensity] = useState("");
   const [recoverySpeed, setRecoverySpeed] = useState("");
   const [symptomsBefore, setSymptomsBefore] = useState<string[]>([]);
+  const [duringCrisisSymptoms, setDuringCrisisSymptoms] = useState<string[]>(
+    []
+  );
   const [postState, setPostState] = useState<string[]>([]);
   const [tookMedication, setTookMedication] = useState<boolean | undefined>(
     undefined
@@ -318,6 +321,7 @@ const CriseFormScreen: React.FC = () => {
       intensity,
       recoverySpeed,
       symptomsBefore: allSymptomsBefore,
+      duringCrisisSymptoms,
       postState: allPostState,
       tookMedication,
       whatWasDoing,
@@ -534,6 +538,32 @@ const CriseFormScreen: React.FC = () => {
         </Card.Content>
       </Card>
 
+      {/* During Crisis Symptoms */}
+      <Card style={styles.card}>
+        <Card.Title
+          titleNumberOfLines={2}
+          title="Ocorreu algum destes eventos durante a crise?"
+        />
+        <Card.Content>
+          {getDuringCrisisSymptoms().map((symptom) => (
+            <Checkbox.Item
+              key={symptom}
+              label={symptom}
+              status={
+                duringCrisisSymptoms.includes(symptom) ? "checked" : "unchecked"
+              }
+              onPress={() =>
+                setDuringCrisisSymptoms((prev) =>
+                  prev.includes(symptom)
+                    ? prev.filter((s) => s !== symptom)
+                    : [...prev, symptom]
+                )
+              }
+            />
+          ))}
+        </Card.Content>
+      </Card>
+
       {/* Post Crisis State */}
       <Card style={styles.card}>
         <Card.Title title="Estado após a Crise" />
@@ -565,7 +595,7 @@ const CriseFormScreen: React.FC = () => {
       {/* Took Medication */}
       <Card style={styles.card}>
         <Card.Title
-          titleNumberOfLines={2}
+          titleNumberOfLines={3}
           title="Tomou seu medicamento corretamente nas 24-48 horas que precederam a crise?"
         />
         <Card.Content>
@@ -833,6 +863,15 @@ const styles = StyleSheet.create({
 });
 
 export default CriseFormScreen;
+
+function getDuringCrisisSymptoms() {
+  return [
+    "Ferimento na língua",
+    "Ferimento na cabeça",
+    "Ferimento em outras regiões",
+    "Liberação de urina ou fezes",
+  ];
+}
 
 function getWasDoingTypes() {
   return [

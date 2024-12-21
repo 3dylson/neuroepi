@@ -9,6 +9,7 @@ export class Crisis {
   intensity?: string;
   recoverySpeed?: string;
   symptomsBefore?: string[];
+  duringCrisisSymptoms?: string[];
   postState?: string[];
   tookMedication?: boolean;
   whatWasDoing?: string;

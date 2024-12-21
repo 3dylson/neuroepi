@@ -17,7 +17,7 @@ function formatHTMLSection(title: string, content: string) {
   return `<div class="section"><h2>${title}</h2>${content}</div>`;
 }
 
-function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
+export function getAnyOtherDisease(medicines: Medicine[] | null): string[] {
   if (!medicines) {
     return ["N/A"];
   }
@@ -161,6 +161,11 @@ function generateSummarySection(charts: any): string {
       altText: "Distribuição por Período do Dia",
     },
     {
+      title: "Atividades no momento da Crise",
+      url: charts.activitiesDuringCrisisChartUrl,
+      altText: "Atividades no momento da Crise",
+    },
+    {
       title: "Fatores Relacionados às Crises",
       url: charts.relatedFactorsChartUrl,
       altText: "Fatores Relacionados às Crises",
@@ -220,7 +225,7 @@ function cssStyles(): string {
       flex: 1 1 45%;
       max-width: 45%;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
     .chart-item img {
       width: 100%;

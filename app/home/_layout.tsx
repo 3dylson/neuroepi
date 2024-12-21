@@ -18,6 +18,7 @@ export default function HomeLayout() {
       <Stack.Screen name="crise/crisis_list" />
       <Stack.Screen name="profile/app_config" />
       <Stack.Screen name="sos/report_screen" />
+      <Stack.Screen name="sos/emergency_sheet" />
     </Stack>
   );
 }

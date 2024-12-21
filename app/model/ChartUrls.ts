@@ -7,4 +7,5 @@ export interface ChartsUrls {
   postStateChartUrl: string;
   timeOfDayChartUrl: string;
   contextChartUrl: string;
+  activitiesDuringCrisisChartUrl: string;
 }

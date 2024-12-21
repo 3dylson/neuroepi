@@ -16,6 +16,12 @@ function countCrisisAttributes(crisis: Crisis, counters: CrisisData) {
       (counters.auraSymptomCounts[symptom] || 0) + 1;
   });
 
+  // Count Activities During Crisis
+  crisis.duringCrisisSymptoms?.forEach((activity) => {
+    counters.activitiesDuringCrisisCounts[activity] =
+      (counters.activitiesDuringCrisisCounts[activity] || 0) + 1;
+  });
+
   // Count Context
   if (crisis.whatWasDoing) {
     counters.contextCounts[crisis.whatWasDoing] =
@@ -134,6 +140,7 @@ function initializeCounters(): CrisisData {
     recentChangeOnMedication: 0,
     timeOfDayCounts: { morning: 0, afternoon: 0, evening: 0, night: 0 },
     contextCounts: {},
+    activitiesDuringCrisisCounts: {},
   };
 }
 
