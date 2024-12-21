@@ -17,6 +17,7 @@ import {
 import { CustomButton } from "@/components/CustomButton";
 import { DoseUnitEnum } from "@/constants/DoseUnitEnum";
 import DropDownInput from "@/components/DropDownInput";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 import { generateId, isAndroid, isIOS } from "../utils/Utils";
 import { DoseFrequency } from "@/constants/DoseFrequency";
@@ -48,10 +49,15 @@ const BottomSheetAddMedicineScreen: React.FC<
   });
 
   // Pre-fill the timeList with medicine times or initialize with one empty time input
-  const [timeList, setTimeList] = useState<string[]>(medicine?.times || [""]);
+  const [timeList, setTimeList] = useState<string[]>(
+    medicine?.times || [DateUtils.toHourMinuteString(new Date())]
+  );
   const [renderAndroidTimePicker, setRenderAndroidTimePicker] = useState<
     null | number
   >(null);
+  const [renderIOSTimePicker, setRenderIOSTimePicker] = useState<null | number>(
+    null
+  );
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -151,38 +157,6 @@ const BottomSheetAddMedicineScreen: React.FC<
     </View>
   );
 
-  const renderTimePopoverContent = (selectItem: (item: string) => void) => (
-    <View style={styles.menu}>
-      <CustomDateTimePicker
-        value={selectedTime}
-        mode="time"
-        onChange={(_event, date) => {
-          if (date) {
-            setSelectedTime(date);
-            handleTimeChange(
-              timeList.length - 1,
-              DateUtils.toHourMinuteString(date)
-            );
-          }
-        }}
-      />
-      {isIOS() && (
-        <Button
-          mode="contained"
-          onPress={() => {
-            if (selectedTime) {
-              const timeString = DateUtils.toHourMinuteString(selectedTime);
-              handleTimeChange(timeList.length - 1, timeString);
-              selectItem(timeString);
-            }
-          }}
-        >
-          Confirm
-        </Button>
-      )}
-    </View>
-  );
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "height" : undefined}
@@ -276,23 +250,43 @@ const BottomSheetAddMedicineScreen: React.FC<
         <Text style={styles.label}>Horários</Text>
         {timeList.map((time, index) => (
           <View style={styles.row} key={index}>
-            <DropDownInput
-              label=""
-              text={time}
-              textInputProps={{
-                editable: false,
-                mode: "outlined",
-                style: styles.timeInput,
-              }}
-              {...(isIOS() && {
-                renderPopoverContent: renderTimePopoverContent,
-              })}
-              customAction={() => {
-                if (isAndroid()) {
-                  setRenderAndroidTimePicker(index);
-                }
-              }}
-            />
+            {isAndroid() && (
+              <DropDownInput
+                label=""
+                text={time}
+                textInputProps={{
+                  editable: false,
+                  mode: "outlined",
+                  style: styles.timeInput,
+                }}
+                // {...(isIOS() && {
+                //   renderPopoverContent: renderTimePopoverContent,
+                // })}
+                customAction={() => {
+                  if (isAndroid()) {
+                    setRenderAndroidTimePicker(index);
+                  }
+                }}
+              />
+            )}
+
+            {isIOS() && (
+              <DateTimePicker
+                value={time ? DateUtils.fromHourMinuteString(time) : new Date()}
+                mode="time"
+                display="clock"
+                onChange={(_, selectedDate) => {
+                  if (selectedDate) {
+                    console.log("Selected date:", selectedDate);
+                    handleTimeChange(
+                      index,
+                      DateUtils.toHourMinuteString(selectedDate)
+                    );
+                  }
+                }}
+              />
+            )}
+
             {index > 0 && (
               <IconButton
                 icon="minus-circle-outline"

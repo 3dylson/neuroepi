@@ -7,6 +7,16 @@ export class DateUtils {
     return `${hours}h:${minutes}m`;
   }
 
+  static fromHourMinuteString(timeString: string): Date {
+    const [hours, minutes] = timeString.split(/[h:m]+/).map(Number);
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+    return date;
+  }
+
   static toDayMonthYearString(date: Date): string {
     const day = date.getDate();
     const month = date.getMonth() + 1; // Months are 0-based
