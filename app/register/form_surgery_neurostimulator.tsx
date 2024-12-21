@@ -127,11 +127,10 @@ export default function FormSurgeryNeurostimulator() {
             <View key={option}>
               <RadioButton.Item
                 label={
-                  option +
-                  (option === SurgeryNeurostimulatorEnum.SURGERY &&
+                  option === SurgeryNeurostimulatorEnum.SURGERY &&
                   surgeryInputValue
-                    ? ` (${surgeryInputValue})`
-                    : "")
+                    ? `${surgeryInputValue}`
+                    : option
                 }
                 value={option}
                 style={styles.radioButtonItem}
