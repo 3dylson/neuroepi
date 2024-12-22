@@ -10,27 +10,17 @@ import {
 import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Sentry from "@sentry/react-native";
+import { captureConsoleIntegration } from "@sentry/core";
 import { isRunningInExpoGo } from "expo";
 import { Linking } from "react-native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-// Construct a new instrumentation instance. This is needed to communicate between the integration and React
-const routingInstrumentation = new Sentry.ReactNavigationInstrumentation();
-
 Sentry.init({
   dsn: "https://6243637e4aab5a90d47a407285dc94e0@o4508225825603584.ingest.de.sentry.io/4508225831501904",
-  // TODO: set debug to false in production
-  debug: true, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
-  integrations: [
-    new Sentry.ReactNativeTracing({
-      // Pass instrumentation to be used as `routingInstrumentation`
-      routingInstrumentation,
-      enableNativeFramesTracking: !isRunningInExpoGo(),
-      // ...
-    }),
-  ],
+  debug: __DEV__, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
+  integrations: [captureConsoleIntegration({ levels: ["error"] })],
 });
 
 function RootLayout() {
@@ -46,11 +36,11 @@ function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  useEffect(() => {
-    if (ref?.current) {
-      routingInstrumentation.registerNavigationContainer(ref);
-    }
-  }, [ref]);
+  // useEffect(() => {
+  //   if (ref?.current) {
+  //     routingInstrumentation.registerNavigationContainer(ref);
+  //   }
+  // }, [ref]);
 
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {

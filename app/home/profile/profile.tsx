@@ -2,7 +2,6 @@ import { User } from "@/app/model/User";
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Text, IconButton, Card } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native"; // Assuming you're using React Navigation
 import { Colors } from "@/constants/Colors";
 import { router } from "expo-router";
 import { generateAndOpenPDF, generateAndSharePDF } from "@/app/utils/PdfUtils";
@@ -11,7 +10,6 @@ import DateRangePicker from "@/components/DateRangePicker";
 export default function ProfileScreen() {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
-  const navigation = useNavigation(); // To navigate between screens
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);

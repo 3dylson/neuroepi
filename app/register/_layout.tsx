@@ -6,7 +6,6 @@ import {
   useRouter,
 } from "expo-router";
 import { Button, IconButton } from "react-native-paper";
-import { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 
 export default function RegisterLayout() {
   const router = useRouter();
@@ -29,11 +28,6 @@ export default function RegisterLayout() {
     <IconButton icon="help-circle" onPress={handleHelpPress} />
   );
 
-  // Common screen options for screens with the help button
-  const screenWithHelpOptions: NativeStackNavigationOptions = {
-    headerRight: HeaderRightButton,
-  };
-
   return (
     <Stack
       screenOptions={{
@@ -53,18 +47,24 @@ export default function RegisterLayout() {
       <Stack.Screen name="form_my_contact" />
       <Stack.Screen
         name="form_emergency_contact"
-        options={screenWithHelpOptions}
+        options={{ headerRight: HeaderRightButton }}
       />
-      <Stack.Screen name="form_diagnosis" options={screenWithHelpOptions} />
-      <Stack.Screen name="form_medication" options={screenWithHelpOptions} />
+      <Stack.Screen
+        name="form_diagnosis"
+        options={{ headerRight: HeaderRightButton }}
+      />
+      <Stack.Screen
+        name="form_medication"
+        options={{ headerRight: HeaderRightButton }}
+      />
       <Stack.Screen name="form_medication_allergies" />
       <Stack.Screen
         name="form_surgery_neurostimulator"
-        options={screenWithHelpOptions}
+        options={{ headerRight: HeaderRightButton }}
       />
       <Stack.Screen
         name="form_doctor_contact"
-        options={screenWithHelpOptions}
+        options={{ headerRight: HeaderRightButton }}
       />
     </Stack>
   );

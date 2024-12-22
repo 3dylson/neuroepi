@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Alert, StyleSheet, Linking } from "react-native";
-import {
-  useNavigation,
-  NavigationProp,
-  ParamListBase,
-} from "@react-navigation/native";
+import { NavigationProp, ParamListBase } from "@react-navigation/native";
+import { useNavigation } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { Button, Switch, Text, List, Divider } from "react-native-paper";
 import { User } from "@/app/model/User";

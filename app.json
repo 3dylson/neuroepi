@@ -55,7 +55,9 @@
         {
           "url": "https://sentry.io/"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
@@ -74,6 +76,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/ba097178-d43b-4e23-904f-205b9dd9ffb1"
-    }
+    },
+    "newArchEnabled": true
   }
 }

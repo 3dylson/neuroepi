@@ -8,7 +8,7 @@ import {
   Button,
   IconButton,
 } from "react-native-paper";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "expo-router";
 import { format, compareDesc } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { Crisis } from "@/app/model/Crisis/Crisis";

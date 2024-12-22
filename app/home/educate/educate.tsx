@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "react-native-paper";
 import { BlogTopic } from "./BlogTopic";
 import { router } from "expo-router";
