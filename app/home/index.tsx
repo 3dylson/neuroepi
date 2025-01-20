@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 10,
   },
   centerLastRow: {
@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffe5e5",
     borderRadius: 20,
+    margin: 4,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 15,
