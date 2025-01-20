@@ -21,7 +21,7 @@ export class User {
   allergies?: string[];
   surgery?: string[];
   neurostimulators?: string[];
-  medicPhone?: string;
+  medicName?: string;
   medicPhone2?: string;
 
   constructor(init?: Partial<User>) {

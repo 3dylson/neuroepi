@@ -11,9 +11,8 @@ import { DataKey } from "@/constants/DataKey";
 import { NavigationProp, ParamListBase } from "@react-navigation/native";
 
 export default function FormDoctorContact() {
-  const [phone1, setPhone1] = useState<string>("");
+  const [medicName, setMedicName] = useState<string>("");
   const [phone2, setPhone2] = useState<string>("");
-  const [phone1Error, setPhone1Error] = useState<string>("");
   const [phone2Error, setPhone2Error] = useState<string>("");
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
   const params = useLocalSearchParams();
@@ -25,15 +24,6 @@ export default function FormDoctorContact() {
   const validatePhone = (input: string): boolean => {
     const phoneRegex = PhoneRegex;
     return phoneRegex.test(input);
-  };
-
-  const handlePhone1Change = (text: string) => {
-    setPhone1(text);
-    if (!validatePhone(text)) {
-      setPhone1Error("Telefone inválido.");
-    } else {
-      setPhone1Error("");
-    }
   };
 
   const handlePhone2Change = (text: string) => {
@@ -62,8 +52,8 @@ export default function FormDoctorContact() {
   useEffect(() => {
     const loadUserData = async () => {
       const savedUser = await User.getFromLocal();
-      if (savedUser?.medicPhone) {
-        setPhone1(savedUser.medicPhone);
+      if (savedUser?.medicName) {
+        setMedicName(savedUser.medicName);
       }
       if (savedUser?.medicPhone2) {
         setPhone2(savedUser.medicPhone2);
@@ -84,12 +74,8 @@ export default function FormDoctorContact() {
 
   // Validate form
   useEffect(() => {
-    setIsFormValid(
-      !phone1Error &&
-        validatePhone(phone1) &&
-        (!phone2 || validatePhone(phone2))
-    );
-  }, [phone1, phone2, phone1Error, phone2Error]);
+    setIsFormValid(!phone2 || validatePhone(phone2));
+  }, [phone2, phone2Error]);
 
   // Handle saving the doctor contacts
   const handleContinue = async () => {
@@ -99,9 +85,9 @@ export default function FormDoctorContact() {
 
     let user = await User.getFromLocal();
     if (!user) {
-      user = new User({ medicPhone: phone1, medicPhone2: phone2 });
+      user = new User({ medicName: medicName, medicPhone2: phone2 });
     } else {
-      await user.updateUserData({ medicPhone: phone1, medicPhone2: phone2 });
+      await user.updateUserData({ medicName: medicName, medicPhone2: phone2 });
     }
 
     // Mark the user form as complete
@@ -120,26 +106,20 @@ export default function FormDoctorContact() {
           Qual é o contato do seu médico?
         </Text>
         <Text style={FormStyles.subtitle}>
-          Insira o telefone dos médicos que o acompanham no tratamento da
+          Insira o nome e o telefone do médico que o acompanha no tratamento da
           epilepsia.
         </Text>
         <TextInput
           mode="outlined"
-          label="Médico 1"
-          keyboardType="phone-pad"
-          returnKeyType="done"
-          value={phone1}
-          onChangeText={handlePhone1Change}
+          label="Nome"
+          value={medicName}
+          onChangeText={setMedicName}
           style={FormStyles.input}
-          error={!!phone1Error} // Show error state if phone1 is invalid
         />
-        {phone1Error ? (
-          <Text style={{ color: "red", marginBottom: 16 }}>{phone1Error}</Text>
-        ) : null}
 
         <TextInput
           mode="outlined"
-          label="Médico 2 (Opcional)"
+          label="Telefone"
           keyboardType="phone-pad"
           value={phone2}
           returnKeyType="done"

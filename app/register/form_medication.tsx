@@ -76,14 +76,6 @@ export default function FormMedication({
     [medicineList, selectedMedicine]
   );
 
-  useEffect(() => {
-    if (medicineList.length > 0) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [medicineList]);
-
   // Retrieve saved medicines when the component mounts
   useEffect(() => {
     const loadUserData = async () => {
@@ -125,7 +117,9 @@ export default function FormMedication({
 
   useEffect(() => {
     if (params.showHelpDialog === "true") {
-      RegisterInfoAlert("Medicamentos prescritos pelo médico.");
+      RegisterInfoAlert(
+        "Medicamentos prescritos pelo médico. Se deseja ser notificado no horário das medicações, marcar adicionar alarme."
+      );
       closeDialog();
     }
   }, [params.showHelpDialog]);

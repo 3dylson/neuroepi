@@ -247,6 +247,14 @@ const BottomSheetAddMedicineScreen: React.FC<
           renderPopoverContent={renderFrequencyPopoverContent}
         />
 
+        <View style={styles.switchContainer}>
+          <Text>Adicionar Alarme</Text>
+          <Switch
+            value={formState.setAlarm}
+            onValueChange={(value) => handleAlarmSwitchChange(value)}
+          />
+        </View>
+
         <Text style={styles.label}>Horários</Text>
         {timeList.map((time, index) => (
           <View style={styles.row} key={index}>
@@ -322,14 +330,6 @@ const BottomSheetAddMedicineScreen: React.FC<
           </CustomButton>
         )}
 
-        <View style={styles.switchContainer}>
-          <Text>Adicionar Alarme</Text>
-          <Switch
-            value={formState.setAlarm}
-            onValueChange={(value) => handleAlarmSwitchChange(value)}
-          />
-        </View>
-
         <Text style={styles.label}>Notas</Text>
         <TextInput
           value={formState.notes}
@@ -373,7 +373,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 26,
   },
   headerTitle: {
     flex: 1,

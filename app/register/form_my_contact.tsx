@@ -78,10 +78,6 @@ export default function FormMyContact() {
 
   // Save or update user contact details and navigate to the next screen
   const handleContinue = async () => {
-    if (!isFormValid) {
-      return;
-    }
-
     let user = await User.getFromLocal();
 
     if (!user) {

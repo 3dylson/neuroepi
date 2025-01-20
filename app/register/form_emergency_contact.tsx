@@ -86,7 +86,7 @@ export default function FormEmergencyContact() {
     <View style={FormStyles.container}>
       <View style={FormStyles.content}>
         <Text variant="headlineSmall" style={FormStyles.title}>
-          Qual é o seu contato de emergência?
+          Insira o telefone que será contactado em caso de emergência?
         </Text>
         <Text style={FormStyles.subtitle}>
           Insira o telefone para ser contatado em caso de emergência.
