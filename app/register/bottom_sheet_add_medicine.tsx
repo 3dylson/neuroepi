@@ -5,6 +5,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Linking,
 } from "react-native";
 import {
   Text,
@@ -65,12 +67,38 @@ const BottomSheetAddMedicineScreen: React.FC<
   };
 
   const handleAlarmSwitchChange = async (value: boolean) => {
-    const calendarPermissionGranted = await requestCalendarPermission();
-    console.log("Calendar permission granted:", calendarPermissionGranted);
+    try {
+      if (value) {
+        // User is enabling the alarm
+        const calendarPermissionGranted = await requestCalendarPermission();
+        console.log("Calendar permission granted:", calendarPermissionGranted);
 
-    if (calendarPermissionGranted) {
-      setFormState((prev) => ({ ...prev, setAlarm: value }));
-    } else {
+        if (calendarPermissionGranted) {
+          setFormState((prev) => ({ ...prev, setAlarm: true }));
+        } else {
+          Alert.alert(
+            "Permissão Necessária",
+            "Não foi possível ativar os lembretes. Por favor, ative a permissão do calendário nas configurações do dispositivo.",
+            [
+              { text: "Cancelar", style: "cancel" },
+              {
+                text: "Abrir Configurações",
+                onPress: () => Linking.openSettings(),
+              },
+            ]
+          );
+          setFormState((prev) => ({ ...prev, setAlarm: false }));
+        }
+      } else {
+        // User is disabling the alarm
+        setFormState((prev) => ({ ...prev, setAlarm: false }));
+      }
+    } catch (error) {
+      console.error("Error handling alarm switch:", error);
+      Alert.alert(
+        "Erro",
+        "Ocorreu um erro ao tentar alterar o estado do alarme. Tente novamente mais tarde."
+      );
       setFormState((prev) => ({ ...prev, setAlarm: false }));
     }
   };
@@ -102,22 +130,50 @@ const BottomSheetAddMedicineScreen: React.FC<
   }
 
   const handleSave = async () => {
-    const newMedicine: Medicine = new Medicine(
-      generateId(),
-      formState.name,
-      formState.dose,
-      formState.doseUnit,
-      formState.frequency ?? DoseFrequency.DAILY,
-      timeList.filter((time) => time !== ""),
-      formState.notes,
-      formState.relatedMedication,
-      formState.isForEpilepsy,
-      formState.setAlarm
-    );
+    try {
+      // Validate form state
+      if (!formState.name.trim()) {
+        Alert.alert("Erro", "O nome do remédio é obrigatório.");
+        return;
+      }
 
-    await setNotificationAlarm(newMedicine);
+      if (
+        formState.setAlarm &&
+        timeList.filter((time) => time !== "").length === 0
+      ) {
+        Alert.alert(
+          "Erro",
+          "Adicione pelo menos um horário para ativar os lembretes."
+        );
+        return;
+      }
 
-    onSave(newMedicine);
+      // Create a new Medicine instance
+      const newMedicine: Medicine = new Medicine(
+        generateId(),
+        formState.name,
+        formState.dose,
+        formState.doseUnit,
+        formState.frequency ?? DoseFrequency.DAILY,
+        timeList.filter((time) => time !== ""),
+        formState.notes,
+        formState.relatedMedication,
+        formState.isForEpilepsy,
+        formState.setAlarm
+      );
+
+      if (formState.setAlarm) {
+        await setNotificationAlarm(newMedicine);
+      }
+
+      onSave(newMedicine);
+    } catch (error) {
+      console.error("Error saving medicine:", error);
+      Alert.alert(
+        "Erro",
+        "Ocorreu um erro ao salvar o remédio. Tente novamente mais tarde."
+      );
+    }
   };
 
   const renderDoseUnitPopoverContent = (selectItem: (item: string) => void) => (

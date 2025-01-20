@@ -58,35 +58,57 @@ const SettingsScreen: React.FC = () => {
     );
   };
 
-  // Toggle notifications setting
   const toggleNotifications = async () => {
-    if (notificationsEnabled) {
-      // If notifications are enabled, disable them
-      await Notifications.setNotificationHandler(null);
-      setNotificationsEnabled(false);
-    } else {
-      // Request permissions if notifications are not enabled
-      const { status } = await Notifications.requestPermissionsAsync();
+    try {
+      if (notificationsEnabled) {
+        // Disable notifications
+        await Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: false,
+            shouldPlaySound: false,
+            shouldSetBadge: false,
+          }),
+        });
+        setNotificationsEnabled(false);
+      } else {
+        // Request permissions for notifications
+        const { status } = await Notifications.requestPermissionsAsync();
 
-      if (status === "granted") {
-        // Enable notifications
-        setNotificationsEnabled(true);
-      } else if (status === "denied") {
-        // Show alert to direct the user to settings
-        Alert.alert(
-          "Permissão necessária",
-          "As notificações estão desativadas. Por favor, ative-as nas configurações do seu dispositivo.",
-          [
-            { text: "Cancelar", style: "cancel" },
-            {
-              text: "Abrir Configurações",
-              onPress: () => {
-                Linking.openSettings(); // Directs user to app settings
+        if (status === "granted") {
+          // Enable notifications
+          await Notifications.setNotificationHandler({
+            handleNotification: async () => ({
+              shouldShowAlert: true,
+              shouldPlaySound: true,
+              shouldSetBadge: true,
+            }),
+          });
+          setNotificationsEnabled(true);
+        } else if (status === "denied") {
+          // Show alert for denied permissions
+          Alert.alert(
+            "Permissão necessária",
+            "As notificações estão desativadas. Por favor, ative-as nas configurações do seu dispositivo.",
+            [
+              { text: "Cancelar", style: "cancel" },
+              {
+                text: "Abrir Configurações",
+                onPress: () => {
+                  Linking.openSettings(); // Directs user to app settings
+                },
               },
-            },
-          ]
-        );
+            ]
+          );
+        } else {
+          console.warn("Notification permissions status:", status);
+        }
       }
+    } catch (error) {
+      console.error("Error toggling notifications:", error);
+      Alert.alert(
+        "Erro",
+        "Ocorreu um erro ao tentar configurar as notificações. Tente novamente mais tarde."
+      );
     }
   };
 

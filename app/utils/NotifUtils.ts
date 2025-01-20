@@ -2,7 +2,8 @@ import { DoseFrequency } from "@/constants/DoseFrequency";
 import * as Notifications from "expo-notifications";
 import * as Calendar from "expo-calendar";
 import { Medicine } from "../model/Medicine";
-import * as Localization from "expo-localization";
+import { Alert, Linking } from "react-native";
+import { getDeviceTimeZone } from "./Utils";
 
 export const setNotificationAlarm = async (
   newMedicine: Medicine
@@ -10,6 +11,13 @@ export const setNotificationAlarm = async (
   if (!newMedicine.isAlarmSet) return;
 
   try {
+    // Request notification permissions
+    const notificationPermissionGranted = await requestNotificationPermission();
+    if (!notificationPermissionGranted) {
+      console.warn("Notification permission not granted.");
+      return;
+    }
+
     // Request calendar permissions
     const calendarPermissionGranted = await requestCalendarPermission();
     if (!calendarPermissionGranted) {
@@ -17,44 +25,64 @@ export const setNotificationAlarm = async (
       return;
     }
 
-    // Get upcoming notification dates based on medicine times and frequency
+    // Get upcoming notification dates
     const notificationDates = getNextNotificationDates(
       newMedicine.times,
       newMedicine.frequency
     );
 
-    // Iterate over each notification date
-    for (const notificationDate of notificationDates) {
-      // Schedule a notification
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: `Hora de tomar seu remédio!`,
-          body: `Não se esqueça de tomar seu remédio: ${newMedicine.name}`,
-          data: { medicineId: newMedicine.id },
-        },
-        trigger: { date: notificationDate },
-      });
+    // Filter out past dates
+    const futureNotificationDates = notificationDates.filter(
+      (date) => date > new Date()
+    );
 
-      // Get the default calendar ID
-      const calendarId = await getDefaultCalendarId();
-      if (!calendarId) {
-        console.warn("Default calendar ID not found.");
-        return;
-      }
-
-      // Set the time zone and create an event in the calendar
-      const deviceTimeZone = Localization.timezone;
-      await Calendar.createEventAsync(calendarId, {
-        title: `Tome seu remédio: ${newMedicine.name}`,
-        startDate: notificationDate,
-        endDate: new Date(notificationDate.getTime() + 30 * 60 * 1000), // Event duration: 30 minutes
-        timeZone: deviceTimeZone,
-        notes: newMedicine.notes,
-        alarms: [{ relativeOffset: -10 }], // Optional: 10 minutes before the event
-      });
+    if (futureNotificationDates.length === 0) {
+      console.warn("No future notification dates available.");
+      return;
     }
+
+    // Schedule notifications and calendar events
+    const deviceTimeZone = await getDeviceTimeZone();
+    const calendarId = await getDefaultCalendarId();
+
+    if (!calendarId) {
+      console.warn("Default calendar ID not found.");
+    }
+
+    await Promise.all(
+      futureNotificationDates.map(async (notificationDate) => {
+        try {
+          // Schedule notification
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: `Hora de tomar seu remédio!`,
+              body: `Não se esqueça de tomar seu remédio: ${newMedicine.name}`,
+              data: { medicineId: newMedicine.id },
+            },
+            trigger: { date: notificationDate },
+          });
+
+          // Create calendar event if a calendar ID is available
+          if (calendarId) {
+            await Calendar.createEventAsync(calendarId, {
+              title: `Tome seu remédio: ${newMedicine.name}`,
+              startDate: notificationDate,
+              endDate: new Date(notificationDate.getTime() + 30 * 60 * 1000), // 30 minutes duration
+              timeZone: deviceTimeZone,
+              notes: newMedicine.notes,
+              alarms: [{ relativeOffset: -10 }], // Optional alarm: 10 minutes before the event
+            });
+          }
+        } catch (error) {
+          console.error(
+            `Error scheduling notification or calendar event for ${notificationDate}:`,
+            error
+          );
+        }
+      })
+    );
   } catch (error) {
-    console.error("Error setting notification and calendar event:", error);
+    console.error("Error setting notifications and calendar events:", error);
   }
 };
 
@@ -62,8 +90,16 @@ export function getNextNotificationDates(
   times: string[],
   frequency: DoseFrequency
 ): Date[] {
+  const now = new Date();
   const notificationDates: Date[] = [];
+
+  // Parse the provided times into valid Date objects
   const parsedTimes = parseTimeStrings(times);
+
+  if (parsedTimes.length === 0) {
+    console.warn("No valid times provided.");
+    return [];
+  }
 
   parsedTimes.forEach((time) => {
     // Clone the parsed time to avoid mutation
@@ -75,25 +111,28 @@ export function getNextNotificationDates(
 
     switch (frequency) {
       case DoseFrequency.DAILY:
-        intervals = 7; // Next 7 days
+        intervals = 7; // Generate dates for the next 7 days
         intervalType = "days";
         break;
       case DoseFrequency.WEEKLY:
-        intervals = 4; // Next 4 weeks
+        intervals = 4; // Generate dates for the next 4 weeks
         intervalType = "weeks";
         break;
       case DoseFrequency.MONTHLY:
-        intervals = 3; // Next 3 months
+        intervals = 3; // Generate dates for the next 3 months
         intervalType = "months";
         break;
       default:
-        intervals = 1; // Fallback to a single instance if frequency is unknown
+        console.warn("Unknown frequency. Defaulting to a single day interval.");
+        intervals = 1;
         intervalType = "days";
         break;
     }
 
-    // Add the initial notification date
-    notificationDates.push(new Date(baseDate));
+    // Add the initial notification date (if in the future)
+    if (baseDate > now) {
+      notificationDates.push(new Date(baseDate));
+    }
 
     // Schedule subsequent notifications based on frequency
     for (let i = 1; i <= intervals; i++) {
@@ -111,7 +150,10 @@ export function getNextNotificationDates(
           break;
       }
 
-      notificationDates.push(nextNotificationDate);
+      // Only include future dates
+      if (nextNotificationDate > now) {
+        notificationDates.push(nextNotificationDate);
+      }
     }
   });
 
@@ -131,16 +173,35 @@ export async function requestCalendarPermission(): Promise<boolean> {
 export async function getDefaultCalendarId(): Promise<string | null> {
   try {
     const calendars = await Calendar.getCalendarsAsync();
-    const defaultCalendar = calendars.find((calendar) => calendar.isPrimary);
 
-    // Fallback to the first available calendar if no primary calendar is set
-    if (defaultCalendar) {
-      return defaultCalendar.id;
-    } else if (calendars.length > 0) {
-      return calendars[0].id;
-    } else {
+    if (!calendars || calendars.length === 0) {
       console.warn("No calendars available on the device.");
       return null;
+    }
+
+    // Log all available calendars for debugging
+    console.log("Available calendars:", calendars);
+
+    // Filter writable calendars
+    const writableCalendars = calendars.filter(
+      (calendar) => calendar.allowsModifications
+    );
+
+    if (writableCalendars.length === 0) {
+      console.warn("No writable calendars available.");
+      return null;
+    }
+
+    // Find primary calendar
+    const defaultCalendar = writableCalendars.find(
+      (calendar) => calendar.isPrimary
+    );
+
+    if (defaultCalendar) {
+      return defaultCalendar.id;
+    } else {
+      // Fallback to the first writable calendar
+      return writableCalendars[0].id;
     }
   } catch (error) {
     console.error("Error getting default calendar ID:", error);
@@ -186,9 +247,30 @@ export function parseTimeStrings(times: string[]): Date[] {
 export async function requestNotificationPermission(): Promise<boolean> {
   try {
     const { status } = await Notifications.requestPermissionsAsync();
-    return status === "granted";
+
+    if (status === "granted") {
+      return true;
+    } else if (status === "denied") {
+      Alert.alert(
+        "Permissão Necessária",
+        "As notificações estão desativadas. Por favor, ative-as nas configurações do seu dispositivo.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Abrir Configurações",
+            onPress: () => Linking.openSettings(),
+          },
+        ]
+      );
+    }
+
+    return false;
   } catch (error) {
     console.error("Error requesting notification permission:", error);
+    Alert.alert(
+      "Erro",
+      "Ocorreu um erro ao solicitar permissão para notificações. Tente novamente mais tarde."
+    );
     return false;
   }
 }

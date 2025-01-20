@@ -36,3 +36,20 @@ export function formatReportPeriod(crises: Crisis[]): string {
   const end = new Date();
   return `${start.toLocaleDateString()} a ${end.toLocaleDateString()}`;
 }
+
+import * as Localization from "expo-localization";
+
+export async function getDeviceTimeZone(): Promise<string> {
+  try {
+    const calendars = await Localization.getCalendars();
+    if (calendars && calendars.length > 0) {
+      // Retrieve the first calendar's time zone
+      return calendars[0].timeZone || "UTC";
+    }
+    console.warn("No calendars available; falling back to UTC.");
+    return "UTC";
+  } catch (error) {
+    console.error("Error fetching device time zone:", error);
+    return "UTC"; // Default fallback time zone
+  }
+}
