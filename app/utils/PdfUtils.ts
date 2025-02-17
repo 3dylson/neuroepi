@@ -125,12 +125,8 @@ function getUserData(user: User): string {
     { label: "Data de nascimento", value: formattedBirthDate },
     { label: "Contato de telefone", value: formatValue(user.phoneNumber) },
     {
-      label: "Contato de emergência 1",
+      label: "Contato de emergência",
       value: formatValue(user.emergencyContact),
-    },
-    {
-      label: "Contato de emergência 2",
-      value: formatValue(user.emergencyContact2),
     },
     { label: "Diagnóstico", value: formatValue(user.diagnostic) },
     { label: "Em uso de", value: medicinesUsed },

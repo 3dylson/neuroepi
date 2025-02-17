@@ -65,7 +65,7 @@ export default function EmergencySheetScreen() {
       <Card style={styles.card}>
         <Text style={styles.sectionHeader}>Contactos de emergência</Text>
         <Text style={styles.field}>
-          <Text style={styles.label}>Contacto de emergência 1: </Text>
+          <Text style={styles.label}>Telefone: </Text>
           {user.emergencyContact || "N/A"}
         </Text>
         {/* <Button
@@ -75,10 +75,6 @@ export default function EmergencySheetScreen() {
         >
           Call Emergency Contact 1
         </Button> */}
-        <Text style={styles.field}>
-          <Text style={styles.label}>Contacto de emergência 2: </Text>
-          {user.emergencyContact2 || "N/A"}
-        </Text>
       </Card>
 
       <Card style={styles.card}>

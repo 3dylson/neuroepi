@@ -93,12 +93,14 @@ const CrisisListScreen: React.FC = () => {
             Tipo: {item.type || "Desconhecido"}
           </Paragraph>
           <View style={styles.detailsContainer}>
-            <Caption style={styles.detailItem}>
-              Duração: {item.duration || "N/A"}
-            </Caption>
-            <Caption style={styles.detailItem}>
-              Intensidade: {item.intensity || "N/A"}
-            </Caption>
+            <View style={styles.detailBox}>
+              <Caption style={styles.detailLabel}>Duração</Caption>
+              <Text style={styles.detailValue}>{item.duration || "N/A"}</Text>
+            </View>
+            <View style={styles.detailBox}>
+              <Caption style={styles.detailLabel}>Intensidade</Caption>
+              <Text style={styles.detailValue}>{item.intensity || "N/A"}</Text>
+            </View>
           </View>
         </Card.Content>
         <Card.Actions style={styles.cardActions}>
@@ -188,12 +190,30 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flexDirection: "row",
+    flexWrap: "wrap", // Allow wrapping
     justifyContent: "space-between",
     marginTop: 4,
   },
   detailItem: {
     fontSize: 14,
     color: "#777", // Lighter gray for less important details
+    flex: 1, // Allow text to take up equal space and prevent overlap
+  },
+  detailBox: {
+    flex: 1,
+    alignItems: "center",
+    padding: 8,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: "#666",
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: "bold",
   },
   cardActions: {
     marginTop: 16,

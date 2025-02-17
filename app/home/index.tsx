@@ -7,15 +7,17 @@ import {
   Animated,
   ScrollView,
   Dimensions,
+  Modal,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; // To add gradient to SOS button
 import { IconButton, useTheme } from "react-native-paper";
-import { router, useNavigation } from "expo-router";
+import { router, useNavigation, useFocusEffect } from "expo-router";
 import { generatePDF } from "../utils/PdfUtils";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as FileSystem from "expo-file-system";
 import DateRangePicker from "@/components/DateRangePicker";
 import { isIOS } from "../utils/Utils";
+import { Crisis } from "../model/Crisis/Crisis";
 
 const HomeLayout: React.FC = () => {
   const { colors } = useTheme(); // Using colors from theme for flexibility
@@ -24,6 +26,7 @@ const HomeLayout: React.FC = () => {
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const screenWidth = Dimensions.get("window").width;
   const cardSize = screenWidth / 3 - 20; // Dynamic card size
+  const [showModal, setShowModal] = useState<boolean>(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -47,6 +50,25 @@ const HomeLayout: React.FC = () => {
       ),
     });
   }, [navigation]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkSosStatus = async () => {
+        const hasSos = await Crisis.hasSosCalled();
+        setShowModal(Boolean(hasSos));
+      };
+      checkSosStatus();
+    }, [])
+  );
+
+  const handleUserChoice = async (choice: string) => {
+    setShowModal(false);
+    if (choice === "fillDetails") {
+      router.push("/home/crise/crise_form");
+    } else if (choice === "dontRemind") {
+      await Crisis.markSosCalled(false);
+    }
+  };
 
   // Function to handle press animation
   const handlePressIn = () => {
@@ -92,6 +114,34 @@ const HomeLayout: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/* Crisis Modal */}
+      <Modal
+        visible={showModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Atenção!</Text>
+            <Text style={styles.modalText}>
+              Você precisa preencher os detalhes sobre a última crise.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.primaryButton]}
+              onPress={() => handleUserChoice("fillDetails")}
+            >
+              <Text style={styles.modalButtonText}>Preencher Detalhes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.secondaryButton]}
+              onPress={() => handleUserChoice("dontRemind")}
+            >
+              <Text style={styles.modalButtonText}>Não lembrar novamente</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <DateRangePicker
         isVisible={showCalendar}
         onVisibilityChange={setShowCalendar}
@@ -264,6 +314,51 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     color: "#fff",
     textAlign: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+  },
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#fff",
+    padding: 25,
+    borderRadius: 15,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalButton: {
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  primaryButton: {
+    backgroundColor: "#6a11cb",
+  },
+  secondaryButton: {
+    backgroundColor: "#ff5f5f",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
 

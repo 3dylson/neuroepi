@@ -21,6 +21,7 @@ import DateRangePicker from "@/components/DateRangePicker";
 import * as IntentLauncher from "expo-intent-launcher";
 import { router } from "expo-router";
 import { isIOS } from "@/app/utils/Utils";
+import { Crisis } from "@/app/model/Crisis/Crisis";
 
 // Animation component
 const PulsatingButton = Animatable.createAnimatableComponent(TouchableOpacity);
@@ -96,6 +97,7 @@ const IncidentAlertScreen: React.FC = () => {
     const initialize = async () => {
       await getCurrentLocation(); // Get the location before sending the message
       await loadUserEmergencyContact();
+      await Crisis.markSosCalled(true); // Mark SOS as called
     };
 
     initialize();

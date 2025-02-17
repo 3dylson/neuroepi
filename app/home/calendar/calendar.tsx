@@ -37,22 +37,6 @@ export default class CalendarScreen extends Component<State> {
     const markedDates: { [key: string]: any } = {}; // For holding the dates with crises and medicines marked
     const today = new Date(); // Get today's date
 
-    // Add medicines to the calendar and mark the dates
-    if (user && user.medicines) {
-      user.medicines.forEach((medicine) => {
-        this.addMedicineToCalendar(items, medicine, today);
-
-        // Mark the date with a green dot for medicines
-        const medicineDates = this.getMedicineDates(medicine, today); // A helper to get all dates for medicines
-        medicineDates.forEach((strTime) => {
-          if (!markedDates[strTime]) {
-            markedDates[strTime] = { dots: [] };
-          }
-          markedDates[strTime].dots.push({ color: "green" });
-        });
-      });
-    }
-
     // Add crises to the calendar and mark the dates
     if (crises) {
       crises.forEach((crise) => {
@@ -70,53 +54,6 @@ export default class CalendarScreen extends Component<State> {
     this.setState({ items, markedDates });
   };
 
-  // A helper function to get all the dates when a medicine should appear on the calendar
-  getMedicineDates = (medicine: Medicine, startDate: Date) => {
-    const dates: string[] = [];
-    let currentDate = new Date(startDate);
-    const daysToGenerate = 30; // Number of days to generate
-
-    for (let i = 0; i < daysToGenerate; i++) {
-      if (this.isMedicineDueOnDate(medicine, currentDate)) {
-        dates.push(this.timeToString(currentDate.getTime()));
-      }
-      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
-    }
-
-    return dates;
-  };
-
-  // Add medicine to the calendar based on its frequency and times
-  addMedicineToCalendar = (
-    items: AgendaSchedule,
-    medicine: Medicine,
-    startDate: Date
-  ) => {
-    const { frequency, times } = medicine;
-    let currentDate = new Date(startDate);
-    const daysToGenerate = 30; // Number of days to generate
-
-    for (let i = 0; i < daysToGenerate; i++) {
-      const strTime = this.timeToString(currentDate.getTime());
-
-      if (this.isMedicineDueOnDate(medicine, currentDate)) {
-        if (!items[strTime]) {
-          items[strTime] = [];
-        }
-
-        times.forEach((time) => {
-          items[strTime].push({
-            name: `${medicine.name} (${time}) - ${medicine.dose} ${medicine.doseUnit}`,
-            height: 60,
-            day: strTime,
-          });
-        });
-      }
-
-      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
-    }
-  };
-
   // Add crises to the calendar
   addCriseToCalendar = (items: AgendaSchedule, crise: Crisis) => {
     const strTime = this.timeToString(new Date(crise.dateTime!).getTime());
@@ -132,21 +69,6 @@ export default class CalendarScreen extends Component<State> {
       height: 60,
       day: strTime,
     });
-  };
-
-  // Check if the medicine is due on the given date based on frequency
-  isMedicineDueOnDate = (medicine: Medicine, date: Date): boolean => {
-    const dayOfWeek = date.getDay();
-    switch (medicine.frequency) {
-      case DoseFrequency.DAILY:
-        return true; // Show every day
-      case DoseFrequency.WEEKLY:
-        return dayOfWeek === 0; // Every Sunday, for example
-      case DoseFrequency.MONTHLY:
-        return date.getDate() === 1; // First day of the month
-      default:
-        return false;
-    }
   };
 
   render() {

@@ -76,4 +76,24 @@ export class Crisis {
       console.error("Error deleting all crises", error);
     }
   }
+
+  // Mark if SOS has been called
+  static async markSosCalled(hasCalled: Boolean): Promise<void> {
+    try {
+      await AsyncStorage.setItem(DataKey.SOS_HAS_CALLED, hasCalled.toString());
+    } catch (error) {
+      console.error("Error marking SOS called", error);
+    }
+  }
+
+  // Check if SOS has been called
+  static async hasSosCalled(): Promise<Boolean> {
+    try {
+      const hasCalled = await AsyncStorage.getItem(DataKey.SOS_HAS_CALLED);
+      return hasCalled === "true";
+    } catch (error) {
+      console.error("Error checking if SOS has been called", error);
+      return false;
+    }
+  }
 }

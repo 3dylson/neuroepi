@@ -21,7 +21,7 @@ export const youtubeVideos: YouTubeVideoInterface[] = [
     id: "3",
     title: "Dra. Luciana Midori",
     thumbnail:
-      "https://yt3.googleusercontent.com/Hbw8ai4umFmX54cxnh-MNQFhvDlzdiJ_Oww86Vwgt7RRX7udlda3qh_HAYJEZNki2YQQSB6Rmw0=s160-c-k-c0x00ffffff-no-rj",
+      "https://yt3.googleusercontent.com/yF9C1Mx8SViMgF9DpgmHoxxhOQ4jUpDLxKj07vqSSjZ5V2ZWO5ASmglaF5UhWypZwlcJQk9iIw=s160-c-k-c0x00ffffff-no-rj",
     url: "https://www.youtube.com/@dra.lumidori",
   },
   {
@@ -40,7 +40,13 @@ export const youtubeVideos: YouTubeVideoInterface[] = [
     id: "6",
     title: "Associação Brasileira de Epilepsia (ABE)",
     thumbnail: "",
-    url: "http://www.epilepsiabrasil.org.br",
+    url: "https://www.epilepsiabrasil.org.br",
+  },
+  {
+    id: "7",
+    title: "Liga Portuguesa Contra a Epilepsia (LPCE)",
+    thumbnail: "",
+    url: "https://epilepsia.pt/",
   },
 ];
 
@@ -77,6 +83,6 @@ export const blogTopics: BlogTopic[] = [
     <br><br>Aqui estão links de sites educativos que podem fornecer mais informações sobre epilepsia:
     `,
     thumbnail: require("@/assets/images/brain.png"),
-    videos: [youtubeVideos[4], youtubeVideos[5]],
+    videos: [youtubeVideos[4], youtubeVideos[5], youtubeVideos[6]],
   },
 ];

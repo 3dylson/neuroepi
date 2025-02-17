@@ -93,7 +93,7 @@ export default function FormEmergencyContact() {
         </Text>
         <TextInput
           mode="outlined"
-          label="Telefone 1"
+          label="Telefone"
           keyboardType="phone-pad"
           returnKeyType="done" // Show "Done" button
           value={phone1}
@@ -104,16 +104,6 @@ export default function FormEmergencyContact() {
         {phone1Error ? (
           <Text style={{ color: "red", marginBottom: 16 }}>{phone1Error}</Text>
         ) : null}
-
-        <TextInput
-          mode="outlined"
-          label="Telefone 2 (Opcional)"
-          keyboardType="phone-pad"
-          value={phone2}
-          onChangeText={(text) => setPhone2(text)}
-          returnKeyType="done"
-          style={FormStyles.input}
-        />
       </View>
       <FAB icon="arrow-right" style={FormStyles.fab} onPress={handleContinue} />
     </View>

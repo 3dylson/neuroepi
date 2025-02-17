@@ -292,10 +292,6 @@ const CriseFormScreen: React.FC = () => {
     setSubstanceUse(value === "true");
   };
 
-  const handleSetSelfHarm = (value: string) => {
-    setSelfHarm(value === "true");
-  };
-
   const handleSave = async () => {
     let allSymptomsBefore = symptomsBefore.concat(
       othersAuraSymptoms
@@ -310,6 +306,11 @@ const CriseFormScreen: React.FC = () => {
         .map((item) => item.trim())
         .filter((s) => s.trim() !== "")
     );
+
+    let hasSelfHarm = duringCrisisSymptoms.some((symptom) =>
+      getDuringCrisisSymptoms().includes(symptom)
+    );
+    setSelfHarm(hasSelfHarm);
 
     console.log("Sleep Status", sleepStatus);
 
@@ -336,6 +337,7 @@ const CriseFormScreen: React.FC = () => {
     });
 
     await Crisis.addOrUpdateCrise(newCrise);
+    await Crisis.markSosCalled(false);
     router.back();
   };
 
@@ -793,20 +795,6 @@ const CriseFormScreen: React.FC = () => {
           <RadioButton.Group
             onValueChange={handleSetSubstanceUse}
             value={(substanceUse ?? "").toString()}
-          >
-            <RadioButton.Item label="Sim" value="true" />
-            <RadioButton.Item label="Não" value="false" />
-          </RadioButton.Group>
-        </Card.Content>
-      </Card>
-
-      {/* Self Harm */}
-      <Card style={styles.card}>
-        <Card.Title title="Autolesão" />
-        <Card.Content>
-          <RadioButton.Group
-            onValueChange={handleSetSelfHarm}
-            value={(selfHarm ?? "").toString()}
           >
             <RadioButton.Item label="Sim" value="true" />
             <RadioButton.Item label="Não" value="false" />
