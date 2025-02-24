@@ -88,9 +88,6 @@ export default function FormEmergencyContact() {
         <Text variant="headlineSmall" style={FormStyles.title}>
           Insira o telefone que será contactado em caso de emergência?
         </Text>
-        <Text style={FormStyles.subtitle}>
-          Insira o telefone para ser contatado em caso de emergência.
-        </Text>
         <TextInput
           mode="outlined"
           label="Telefone"

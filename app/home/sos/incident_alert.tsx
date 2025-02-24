@@ -95,9 +95,9 @@ const IncidentAlertScreen: React.FC = () => {
   // Load emergency contact and location on component mount
   useEffect(() => {
     const initialize = async () => {
+      await Crisis.markSosCalled(true); // Mark SOS as called
       await getCurrentLocation(); // Get the location before sending the message
       await loadUserEmergencyContact();
-      await Crisis.markSosCalled(true); // Mark SOS as called
     };
 
     initialize();
@@ -178,12 +178,26 @@ const IncidentAlertScreen: React.FC = () => {
     };
 
     // Function to send WhatsApp (encoded)
-    const sendWhatsApp = () => {
+    const sendWhatsApp = async () => {
       const whatsappMessage = encodeURIComponent(message);
       const whatsappLink = `whatsapp://send?phone=${emergencyContactNumber}&text=${whatsappMessage}`;
-      Linking.openURL(whatsappLink).catch(() => {
-        Alert.alert("WhatsApp não instalado.");
-      });
+
+      try {
+        const canOpenWhatsApp = await Linking.canOpenURL(whatsappLink);
+        if (canOpenWhatsApp) {
+          await Linking.openURL(whatsappLink);
+        } else {
+          Alert.alert(
+            "WhatsApp não está disponível",
+            "O número pode não estar gravado no WhatsApp ou o aplicativo não está instalado."
+          );
+        }
+      } catch (error) {
+        Alert.alert(
+          "Erro no WhatsApp",
+          "Não foi possível enviar mensagem via WhatsApp."
+        );
+      }
     };
 
     //sendSMS();

@@ -4,8 +4,10 @@ import { Text, Card, Button, ActivityIndicator } from "react-native-paper";
 import { User } from "@/app/model/User";
 import { DateUtils } from "@/app/utils/TimeUtils";
 import { getAnyOtherDisease } from "@/app/utils/PdfUtils";
+import { useKeepAwake } from "expo-keep-awake";
 
 export default function EmergencySheetScreen() {
+  useKeepAwake();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 

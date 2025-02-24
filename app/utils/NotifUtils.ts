@@ -18,10 +18,10 @@ export const setNotificationAlarm = async (
       return;
     }
 
-    // Request calendar permissions
+    // Request calendar (and reminders) permissions
     const calendarPermissionGranted = await requestCalendarPermission();
     if (!calendarPermissionGranted) {
-      console.warn("Calendar permission not granted.");
+      console.warn("Calendar/Reminders permission not granted.");
       return;
     }
 
@@ -67,7 +67,7 @@ export const setNotificationAlarm = async (
             await Calendar.createEventAsync(calendarId, {
               title: `Tome seu remédio: ${newMedicine.name}`,
               startDate: notificationDate,
-              endDate: new Date(notificationDate.getTime() + 30 * 60 * 1000), // 30 minutes duration
+              endDate: new Date(notificationDate.getTime() + 30 * 60 * 1000),
               timeZone: deviceTimeZone,
               notes: newMedicine.notes,
               alarms: [{ relativeOffset: -10 }], // Optional alarm: 10 minutes before the event
@@ -160,12 +160,26 @@ export function getNextNotificationDates(
   return notificationDates;
 }
 
+/**
+ * Request both Calendar and Reminders permissions (especially needed for iOS).
+ * This function returns true only if both are granted.
+ */
 export async function requestCalendarPermission(): Promise<boolean> {
   try {
-    const { status } = await Calendar.requestCalendarPermissionsAsync();
-    return status === "granted";
+    const { status: calendarStatus } =
+      await Calendar.requestCalendarPermissionsAsync();
+    // On iOS, we also need to request "reminders" permission if we want to create reminders.
+    // If you're only using calendars, this may not be needed—but some iOS versions might demand it.
+    const { status: remindersStatus } =
+      await Calendar.requestRemindersPermissionsAsync();
+
+    if (calendarStatus === "granted" && remindersStatus === "granted") {
+      return true;
+    } else {
+      return false;
+    }
   } catch (error) {
-    console.error("Error requesting calendar permission:", error);
+    console.warn("Error requesting calendar/reminder permissions:", error);
     return false;
   }
 }
@@ -213,12 +227,34 @@ export function parseTimeStrings(times: string[]): Date[] {
   const now = new Date();
   const notificationDates: Date[] = [];
 
+  // This regex handles multiple formats:
+  // - "7:4", "07:04"
+  // - "7h:4m", "7H:4M"
+  // - "7:4m", etc.
+  // Explanation:
+  // (\d{1,2}) => Captures 1 or 2 digits for hours
+  // (?:[hH])? => Optionally matches a "h" or "H"
+  // :? => Optionally matches a colon
+  // (\d{1,2}) => Captures 1 or 2 digits for minutes
+  // (?:[mM])? => Optionally matches a "m" or "M"
+  const timeRegex = /^\s*(\d{1,2})(?:[hH])?:?(\d{1,2})(?:[mM])?\s*$/;
+
   times.forEach((time) => {
     try {
-      const [hours, minutes] = time.split(":").map(Number);
+      // Try matching the time string with the regex
+      const match = time.match(timeRegex);
+      if (!match) {
+        console.warn(`Invalid time format: ${time}`);
+        return;
+      }
+
+      const hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
 
       if (isNaN(hours) || isNaN(minutes)) {
-        console.warn(`Invalid time format: ${time}`);
+        console.warn(
+          `Invalid time values (hours/minutes are not numbers): ${time}`
+        );
         return;
       }
 

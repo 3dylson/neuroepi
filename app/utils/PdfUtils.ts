@@ -93,7 +93,7 @@ async function generateHTMLContent(crises: Crisis[] | null): Promise<string> {
       <head><style>${cssStyles()}</style></head>
       <body>
         <div class="header">
-          <h1>Relatório Médico</h1>
+          <h1>${user.firstName} ${user?.lastName}</h1>
           <p><strong>Período do Relatório:</strong> ${chartPeriod}</p>
         </div>
         ${patientInfo}
@@ -208,7 +208,7 @@ function cssStyles(): string {
     body { font-family: Arial, sans-serif; color: #333; }
     h1, h2 { color: #333; text-align: center; }
     p, li { font-size: 14px; line-height: 1.6; }
-    .header { text-align: center; margin-bottom: 20px; }
+    .header { text-align: center; margin-bottom: 20px; margin-top: 60px; }
     .section { margin: 20px 0; }
     .charts-container {
       display: flex;

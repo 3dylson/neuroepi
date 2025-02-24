@@ -307,8 +307,9 @@ const CriseFormScreen: React.FC = () => {
         .filter((s) => s.trim() !== "")
     );
 
-    let hasSelfHarm = duringCrisisSymptoms.some((symptom) =>
-      getDuringCrisisSymptoms().includes(symptom)
+    let hasSelfHarm = duringCrisisSymptoms.some(
+      (symptom) =>
+        getDuringCrisisSymptoms().includes(symptom) && symptom !== "Nenhum"
     );
     setSelfHarm(hasSelfHarm);
 
@@ -858,6 +859,7 @@ function getDuringCrisisSymptoms() {
     "Ferimento na cabeça",
     "Ferimento em outras regiões",
     "Liberação de urina ou fezes",
+    "Nenhum",
   ];
 }
 
