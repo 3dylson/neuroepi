@@ -53,3 +53,7 @@ export async function getDeviceTimeZone(): Promise<string> {
     return "UTC"; // Default fallback time zone
   }
 }
+
+export function isDebugMode(): boolean {
+  return __DEV__;
+}

@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Sentry from "@sentry/react-native";
 import { isRunningInExpoGo } from "expo";
 import { Linking } from "react-native";
+import { isDebugMode } from "./utils/Utils";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -22,7 +23,7 @@ const routingInstrumentation = new Sentry.ReactNavigationInstrumentation();
 Sentry.init({
   dsn: "https://6243637e4aab5a90d47a407285dc94e0@o4508225825603584.ingest.de.sentry.io/4508225831501904",
   // TODO: set debug to false in production
-  debug: true, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
+  debug: isDebugMode(),
   integrations: [
     new Sentry.ReactNativeTracing({
       // Pass instrumentation to be used as `routingInstrumentation`
