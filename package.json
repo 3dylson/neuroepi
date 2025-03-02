@@ -24,7 +24,7 @@
     "@sentry/react-native": "~5.36.0",
     "chroma-js": "^3.1.1",
     "date-fns": "^4.1.0",
-    "expo": "^51.0.34",
+    "expo": "^52.0.37",
     "expo-calendar": "~13.0.5",
     "expo-constants": "~16.0.2",
     "expo-file-system": "~17.0.1",
